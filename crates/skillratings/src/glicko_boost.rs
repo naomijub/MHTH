@@ -26,8 +26,8 @@
 //!
 //! ```
 //! use skillratings::{
-//!     glicko_boost::{glicko_boost, GlickoBoostConfig, GlickoBoostRating},
 //!     Outcomes,
+//!     glicko_boost::{GlickoBoostConfig, GlickoBoostRating, glicko_boost},
 //! };
 //!
 //! // Initialise a new player rating with a rating of 1500 and a deviation of 350.
@@ -75,8 +75,8 @@ use std::f64::consts::PI;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    glicko::GlickoRating, glicko2::Glicko2Rating, sticko::StickoRating, Outcomes, Rating,
-    RatingPeriodSystem, RatingSystem,
+    Outcomes, Rating, RatingPeriodSystem, RatingSystem, glicko::GlickoRating,
+    glicko2::Glicko2Rating, sticko::StickoRating,
 };
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -304,8 +304,8 @@ impl RatingPeriodSystem for GlickoBoost {
 /// # Examples
 /// ```
 /// use skillratings::{
-///     glicko_boost::{glicko_boost, GlickoBoostConfig, GlickoBoostRating},
 ///     Outcomes,
+///     glicko_boost::{GlickoBoostConfig, GlickoBoostRating, glicko_boost},
 /// };
 ///
 /// let player_one = GlickoBoostRating {
@@ -457,8 +457,8 @@ pub fn glicko_boost(
 /// # Examples
 /// ```
 /// use skillratings::{
-///     glicko_boost::{glicko_boost_rating_period, GlickoBoostConfig, GlickoBoostRating},
 ///     Outcomes,
+///     glicko_boost::{GlickoBoostConfig, GlickoBoostRating, glicko_boost_rating_period},
 /// };
 ///
 /// let player = GlickoBoostRating {
@@ -589,7 +589,7 @@ pub fn glicko_boost_rating_period(
 ///
 /// # Examples
 /// ```
-/// use skillratings::glicko_boost::{expected_score, GlickoBoostConfig, GlickoBoostRating};
+/// use skillratings::glicko_boost::{GlickoBoostConfig, GlickoBoostRating, expected_score};
 ///
 /// let player_one = GlickoBoostRating {
 ///     rating: 2500.0,
@@ -654,8 +654,8 @@ pub fn expected_score(
 /// # Examples
 /// ```
 /// use skillratings::{
-///     glicko_boost::{expected_score_rating_period, GlickoBoostConfig, GlickoBoostRating},
 ///     Outcomes,
+///     glicko_boost::{GlickoBoostConfig, GlickoBoostRating, expected_score_rating_period},
 /// };
 ///
 /// let player = GlickoBoostRating {
@@ -719,7 +719,7 @@ pub fn expected_score_rating_period(
 ///
 /// # Examples
 /// ```
-/// use skillratings::glicko_boost::{decay_deviation, GlickoBoostConfig, GlickoBoostRating};
+/// use skillratings::glicko_boost::{GlickoBoostConfig, GlickoBoostRating, decay_deviation};
 ///
 /// let player_one = GlickoBoostRating {
 ///     rating: 2720.0,
@@ -773,7 +773,7 @@ pub fn decay_deviation(
 ///
 /// # Examples
 /// ```
-/// use skillratings::glicko_boost::{confidence_interval, GlickoBoostRating};
+/// use skillratings::glicko_boost::{GlickoBoostRating, confidence_interval};
 ///
 /// let player = GlickoBoostRating {
 ///     rating: 2250.0,

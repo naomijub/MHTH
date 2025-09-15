@@ -1,12 +1,12 @@
 use skillratings::{
-    trueskill::{
-        expected_score, expected_score_two_teams, trueskill, trueskill_multi_team,
-        trueskill_rating_period, trueskill_two_teams, TrueSkillConfig, TrueSkillRating,
-    },
     MultiTeamOutcome, Outcomes,
+    trueskill::{
+        TrueSkillConfig, TrueSkillRating, expected_score, expected_score_two_teams, trueskill,
+        trueskill_multi_team, trueskill_rating_period, trueskill_two_teams,
+    },
 };
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 
 pub fn trueskill_benchmark(c: &mut Criterion) {
     let player_one = TrueSkillRating {

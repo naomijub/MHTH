@@ -1,12 +1,12 @@
 use skillratings::{
-    weng_lin::{
-        expected_score, expected_score_two_teams, weng_lin, weng_lin_multi_team,
-        weng_lin_rating_period, weng_lin_two_teams, WengLinConfig, WengLinRating,
-    },
     MultiTeamOutcome, Outcomes,
+    weng_lin::{
+        WengLinConfig, WengLinRating, expected_score, expected_score_two_teams, weng_lin,
+        weng_lin_multi_team, weng_lin_rating_period, weng_lin_two_teams,
+    },
 };
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 
 pub fn weng_lin_benchmark(c: &mut Criterion) {
     let player_one = WengLinRating {

@@ -57,8 +57,8 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    glicko::GlickoRating, glicko_boost::GlickoBoostRating, sticko::StickoRating, Outcomes, Rating,
-    RatingPeriodSystem, RatingSystem,
+    Outcomes, Rating, RatingPeriodSystem, RatingSystem, glicko::GlickoRating,
+    glicko_boost::GlickoBoostRating, sticko::StickoRating,
 };
 use std::f64::consts::PI;
 
@@ -248,8 +248,8 @@ impl RatingPeriodSystem for Glicko2 {
 /// # Examples
 /// ```
 /// use skillratings::{
-///     glicko2::{glicko2, Glicko2Config, Glicko2Rating},
 ///     Outcomes,
+///     glicko2::{Glicko2Config, Glicko2Rating, glicko2},
 /// };
 ///
 /// let player_one = Glicko2Rating {
@@ -361,8 +361,8 @@ pub fn glicko2(
 /// # Examples
 /// ```
 /// use skillratings::{
-///     glicko2::{glicko2_rating_period, Glicko2Config, Glicko2Rating},
 ///     Outcomes,
+///     glicko2::{Glicko2Config, Glicko2Rating, glicko2_rating_period},
 /// };
 ///
 /// let player = Glicko2Rating {
@@ -466,7 +466,7 @@ pub fn glicko2_rating_period(
 ///
 /// # Examples
 /// ```
-/// use skillratings::glicko2::{expected_score, Glicko2Rating};
+/// use skillratings::glicko2::{Glicko2Rating, expected_score};
 ///
 /// let player_one = Glicko2Rating {
 ///     rating: 2500.0,
@@ -513,7 +513,7 @@ pub fn expected_score(player_one: &Glicko2Rating, player_two: &Glicko2Rating) ->
 ///
 /// # Examples
 /// ```
-/// use skillratings::glicko2::{expected_score_rating_period, Glicko2Rating};
+/// use skillratings::glicko2::{Glicko2Rating, expected_score_rating_period};
 ///
 /// let player = Glicko2Rating {
 ///     rating: 1900.0,
@@ -567,7 +567,7 @@ pub fn expected_score_rating_period(
 ///
 /// # Examples
 /// ```
-/// use skillratings::glicko2::{decay_deviation, Glicko2Rating};
+/// use skillratings::glicko2::{Glicko2Rating, decay_deviation};
 ///
 /// let player_one = Glicko2Rating {
 ///     rating: 2720.0,
@@ -600,7 +600,7 @@ pub fn decay_deviation(player: &Glicko2Rating) -> Glicko2Rating {
 ///
 /// # Examples
 /// ```
-/// use skillratings::glicko2::{confidence_interval, Glicko2Rating};
+/// use skillratings::glicko2::{Glicko2Rating, confidence_interval};
 ///
 /// let player = Glicko2Rating {
 ///     rating: 2250.0,

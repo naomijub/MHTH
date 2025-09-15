@@ -1,9 +1,9 @@
 use skillratings::{
-    elo::{elo, elo_rating_period, expected_score, EloConfig, EloRating},
     Outcomes,
+    elo::{EloConfig, EloRating, elo, elo_rating_period, expected_score},
 };
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 
 pub fn elo_benchmark(c: &mut Criterion) {
     let player_one = EloRating { rating: 1520.3 };

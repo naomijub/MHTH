@@ -33,8 +33,8 @@
 //!
 //! ```
 //! use skillratings::{
-//!     trueskill::{trueskill, TrueSkillConfig, TrueSkillRating},
 //!     Outcomes,
+//!     trueskill::{TrueSkillConfig, TrueSkillRating, trueskill},
 //! };
 //!
 //! // Initialise a new player rating with a rating of 25, and an uncertainty of 25/3 ≈ 8.33.
@@ -88,11 +88,11 @@ use matrix::Matrix;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-use crate::{weng_lin::WengLinRating, Outcomes};
 use crate::{
     MultiTeamOutcome, MultiTeamRatingSystem, Rating, RatingPeriodSystem, RatingSystem,
     TeamRatingSystem,
 };
+use crate::{Outcomes, weng_lin::WengLinRating};
 
 const MIN_DELTA: f64 = 0.0001;
 
@@ -314,8 +314,8 @@ impl MultiTeamRatingSystem for TrueSkill {
 /// # Examples
 /// ```
 /// use skillratings::{
-///     trueskill::{trueskill, TrueSkillConfig, TrueSkillRating},
 ///     Outcomes,
+///     trueskill::{TrueSkillConfig, TrueSkillRating, trueskill},
 /// };
 ///
 /// let player_one = TrueSkillRating::new();
@@ -429,8 +429,8 @@ pub fn trueskill(
 /// # Examples
 /// ```
 /// use skillratings::{
-///     trueskill::{trueskill_rating_period, TrueSkillConfig, TrueSkillRating},
 ///     Outcomes,
+///     trueskill::{TrueSkillConfig, TrueSkillRating, trueskill_rating_period},
 /// };
 ///
 /// let player_one = TrueSkillRating::new();
@@ -537,8 +537,8 @@ pub fn trueskill_rating_period(
 /// # Examples
 /// ```
 /// use skillratings::{
-///     trueskill::{trueskill_two_teams, TrueSkillConfig, TrueSkillRating},
 ///     Outcomes,
+///     trueskill::{TrueSkillConfig, TrueSkillRating, trueskill_two_teams},
 /// };
 ///
 /// let player_one = TrueSkillRating {
@@ -677,8 +677,8 @@ pub fn trueskill_two_teams(
 /// # Examples
 /// ```
 /// use skillratings::{
-///     trueskill::{trueskill_multi_team, TrueSkillConfig, TrueSkillRating},
 ///     MultiTeamOutcome,
+///     trueskill::{TrueSkillConfig, TrueSkillRating, trueskill_multi_team},
 /// };
 ///
 /// let team_one = vec![
@@ -768,7 +768,7 @@ pub fn trueskill_multi_team(
     for (pos, (team, outcome)) in teams_and_ranks.iter().enumerate() {
         sorted_teams_and_ranks_with_pos.push((pos, (*team, *outcome)));
     }
-    sorted_teams_and_ranks_with_pos.sort_by_key(|v| v.1 .1);
+    sorted_teams_and_ranks_with_pos.sort_by_key(|v| v.1.1);
 
     let teams_and_ranks: Vec<(&[TrueSkillRating], MultiTeamOutcome)> =
         sorted_teams_and_ranks_with_pos
@@ -871,7 +871,7 @@ pub fn trueskill_multi_team(
 ///
 /// # Examples
 /// ```
-/// use skillratings::trueskill::{match_quality, TrueSkillConfig, TrueSkillRating};
+/// use skillratings::trueskill::{TrueSkillConfig, TrueSkillRating, match_quality};
 ///
 /// let player_one = TrueSkillRating::new();
 /// let player_two = TrueSkillRating::new();
@@ -918,7 +918,7 @@ pub fn match_quality(
 ///
 /// # Examples
 /// ```
-/// use skillratings::trueskill::{match_quality_rating_period, TrueSkillConfig, TrueSkillRating};
+/// use skillratings::trueskill::{TrueSkillConfig, TrueSkillRating, match_quality_rating_period};
 ///
 /// let player_one = TrueSkillRating::new();
 /// let player_two = TrueSkillRating::new();
@@ -959,7 +959,7 @@ pub fn match_quality_rating_period(
 ///
 /// # Examples
 /// ```
-/// use skillratings::trueskill::{match_quality_two_teams, TrueSkillConfig, TrueSkillRating};
+/// use skillratings::trueskill::{TrueSkillConfig, TrueSkillRating, match_quality_two_teams};
 ///
 /// let player_one = TrueSkillRating {
 ///     rating: 20.0,
@@ -1025,7 +1025,7 @@ pub fn match_quality_two_teams(
 ///
 /// # Examples
 /// ```
-/// use skillratings::trueskill::{match_quality_multi_team, TrueSkillConfig, TrueSkillRating};
+/// use skillratings::trueskill::{TrueSkillConfig, TrueSkillRating, match_quality_multi_team};
 ///
 /// let team_one = vec![
 ///     TrueSkillRating {
@@ -1125,7 +1125,7 @@ pub fn match_quality_multi_team(teams: &[&[TrueSkillRating]], config: &TrueSkill
 ///
 /// # Examples
 /// ```
-/// use skillratings::trueskill::{expected_score, TrueSkillConfig, TrueSkillRating};
+/// use skillratings::trueskill::{TrueSkillConfig, TrueSkillRating, expected_score};
 ///
 /// let better_player = TrueSkillRating {
 ///     rating: 44.0,
@@ -1181,7 +1181,7 @@ pub fn expected_score(
 ///
 /// # Examples
 /// ```
-/// use skillratings::trueskill::{expected_score_two_teams, TrueSkillConfig, TrueSkillRating};
+/// use skillratings::trueskill::{TrueSkillConfig, TrueSkillRating, expected_score_two_teams};
 ///
 /// let player_one = TrueSkillRating {
 ///     rating: 38.0,
@@ -1252,7 +1252,7 @@ pub fn expected_score_two_teams(
 ///
 /// # Examples
 /// ```
-/// use skillratings::trueskill::{expected_score_multi_team, TrueSkillConfig, TrueSkillRating};
+/// use skillratings::trueskill::{TrueSkillConfig, TrueSkillRating, expected_score_multi_team};
 ///
 /// let team_one = vec![
 ///     TrueSkillRating {
@@ -1358,7 +1358,7 @@ pub fn expected_score_multi_team(
 ///
 /// # Examples
 /// ```
-/// use skillratings::trueskill::{expected_score_rating_period, TrueSkillConfig, TrueSkillRating};
+/// use skillratings::trueskill::{TrueSkillConfig, TrueSkillRating, expected_score_rating_period};
 ///
 /// let player = TrueSkillRating {
 ///     rating: 19.0,
@@ -1417,7 +1417,7 @@ pub fn expected_score_rating_period(
 ///
 /// # Example
 /// ```
-/// use skillratings::trueskill::{get_rank, TrueSkillRating};
+/// use skillratings::trueskill::{TrueSkillRating, get_rank};
 ///
 /// let new_player = TrueSkillRating::new();
 /// let older_player = TrueSkillRating {
@@ -1486,11 +1486,7 @@ fn v_draw(difference: f64, draw_margin: f64, c: f64) -> f64 {
 
     let x = pdf(-draw_c - diff_c_abs, 0.0, 1.0) - pdf(draw_c - diff_c_abs, 0.0, 1.0);
 
-    if diff_c < 0.0 {
-        -x / norm
-    } else {
-        x / norm
-    }
+    if diff_c < 0.0 { -x / norm } else { x / norm }
 }
 
 fn w_draw(difference: f64, draw_margin: f64, c: f64) -> f64 {
@@ -1573,11 +1569,7 @@ fn erfc(x: f64) -> f64 {
         )
         .exp();
 
-    if x < 0.0 {
-        2.0 - r
-    } else {
-        r
-    }
+    if x < 0.0 { 2.0 - r } else { r }
 }
 
 #[allow(clippy::excessive_precision)]
@@ -1605,11 +1597,7 @@ fn inverse_erfc(y: f64) -> f64 {
         x += err / 1.128_379_167_095_512_57f64.mul_add((-(x.powi(2))).exp(), -x * err);
     }
 
-    if zero_point {
-        x
-    } else {
-        -x
-    }
+    if zero_point { x } else { -x }
 }
 
 /// The cumulative distribution function.
@@ -2720,7 +2708,7 @@ mod tests {
         let results = trueskill_multi_team(teams_and_ranks, &TrueSkillConfig::new());
 
         println!("{results:#?}");
-        
+
         assert!((results[0][0].rating - 46.844_398_641_975_886).abs() < f64::EPSILON);
         assert!((results[1][0].rating - -21.0).abs() < f64::EPSILON);
         assert!((results[2][0].rating - 121.973_594_228_967_4).abs() < f64::EPSILON);

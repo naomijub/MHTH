@@ -1,9 +1,9 @@
 use skillratings::{
-    glicko2::{expected_score, glicko2, glicko2_rating_period, Glicko2Config, Glicko2Rating},
     Outcomes,
+    glicko2::{Glicko2Config, Glicko2Rating, expected_score, glicko2, glicko2_rating_period},
 };
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 
 pub fn glicko2_bench(c: &mut Criterion) {
     let player_one = Glicko2Rating {

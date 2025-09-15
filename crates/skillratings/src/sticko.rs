@@ -24,8 +24,8 @@
 //!
 //! ```
 //! use skillratings::{
-//!     sticko::{sticko, StickoConfig, StickoRating},
 //!     Outcomes,
+//!     sticko::{StickoConfig, StickoRating, sticko},
 //! };
 //!
 //! // Initialise a new player rating with a rating of 1500 and a deviation of 350.
@@ -72,8 +72,8 @@ use std::f64::consts::PI;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    glicko::GlickoRating, glicko2::Glicko2Rating, glicko_boost::GlickoBoostRating, Outcomes,
-    Rating, RatingPeriodSystem, RatingSystem,
+    Outcomes, Rating, RatingPeriodSystem, RatingSystem, glicko::GlickoRating,
+    glicko_boost::GlickoBoostRating, glicko2::Glicko2Rating,
 };
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -297,8 +297,8 @@ impl RatingPeriodSystem for Sticko {
 /// # Examples
 /// ```
 /// use skillratings::{
-///     sticko::{sticko, StickoConfig, StickoRating},
 ///     Outcomes,
+///     sticko::{StickoConfig, StickoRating, sticko},
 /// };
 ///
 /// let player_one = StickoRating {
@@ -430,8 +430,8 @@ pub fn sticko(
 /// # Examples
 /// ```
 /// use skillratings::{
-///     sticko::{sticko_rating_period, StickoConfig, StickoRating},
 ///     Outcomes,
+///     sticko::{StickoConfig, StickoRating, sticko_rating_period},
 /// };
 ///
 /// let player = StickoRating {
@@ -551,7 +551,7 @@ pub fn sticko_rating_period(
 ///
 /// # Examples
 /// ```
-/// use skillratings::sticko::{expected_score, StickoConfig, StickoRating};
+/// use skillratings::sticko::{StickoConfig, StickoRating, expected_score};
 ///
 /// let player_one = StickoRating {
 ///     rating: 1830.0,
@@ -613,7 +613,7 @@ pub fn expected_score(
 ///
 /// # Examples
 /// ```
-/// use skillratings::sticko::{expected_score_rating_period, StickoConfig, StickoRating};
+/// use skillratings::sticko::{StickoConfig, StickoRating, expected_score_rating_period};
 ///
 /// let player = StickoRating {
 ///     rating: 1900.0,
@@ -671,7 +671,7 @@ pub fn expected_score_rating_period(
 ///
 /// # Examples
 /// ```
-/// use skillratings::sticko::{decay_deviation, StickoConfig, StickoRating};
+/// use skillratings::sticko::{StickoConfig, StickoRating, decay_deviation};
 ///
 /// let player_one = StickoRating {
 ///     rating: 2720.0,
@@ -702,7 +702,7 @@ pub fn decay_deviation(player: &StickoRating, config: &StickoConfig) -> StickoRa
 ///
 /// # Examples
 /// ```
-/// use skillratings::sticko::{confidence_interval, StickoRating};
+/// use skillratings::sticko::{StickoRating, confidence_interval};
 ///
 /// let player = StickoRating {
 ///     rating: 2250.0,

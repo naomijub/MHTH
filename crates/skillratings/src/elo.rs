@@ -12,8 +12,8 @@
 //!
 //! ```
 //! use skillratings::{
-//!     elo::{elo, EloConfig, EloRating},
 //!     Outcomes,
+//!     elo::{EloConfig, EloRating, elo},
 //! };
 //!
 //! // Initialise a new player rating with a rating of 1000.
@@ -172,8 +172,8 @@ impl RatingPeriodSystem for Elo {
 /// # Examples
 /// ```
 /// use skillratings::{
-///     elo::{elo, EloConfig, EloRating},
 ///     Outcomes,
+///     elo::{EloConfig, EloRating, elo},
 /// };
 ///
 /// let player_one = EloRating { rating: 600.0 };
@@ -226,8 +226,8 @@ pub fn elo(
 /// # Examples
 /// ```
 /// use skillratings::{
-///     elo::{elo_rating_period, EloConfig, EloRating},
 ///     Outcomes,
+///     elo::{EloConfig, EloRating, elo_rating_period},
 /// };
 ///
 /// let player = EloRating { rating: 1204.0 };
@@ -280,7 +280,7 @@ pub fn elo_rating_period(
 ///
 /// # Examples
 /// ```
-/// use skillratings::elo::{expected_score, EloRating};
+/// use skillratings::elo::{EloRating, expected_score};
 ///
 /// let player_one = EloRating { rating: 1320.0 };
 /// let player_two = EloRating { rating: 1217.0 };
@@ -307,7 +307,7 @@ pub fn expected_score(player_one: &EloRating, player_two: &EloRating) -> (f64, f
 ///
 /// # Examples
 /// ```
-/// use skillratings::elo::{expected_score_rating_period, EloRating};
+/// use skillratings::elo::{EloRating, expected_score_rating_period};
 ///
 /// let player = EloRating { rating: 1900.0 };
 ///

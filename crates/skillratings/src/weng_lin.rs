@@ -20,8 +20,8 @@
 //!
 //! ```
 //! use skillratings::{
-//!     weng_lin::{weng_lin, WengLinConfig, WengLinRating},
 //!     Outcomes,
+//!     weng_lin::{WengLinConfig, WengLinRating, weng_lin},
 //! };
 //!
 //! // Initialise a new player rating with a rating of 25, and an uncertainty of 25/3 ≈ 8.33.
@@ -66,8 +66,8 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    trueskill::TrueSkillRating, MultiTeamOutcome, MultiTeamRatingSystem, Outcomes, Rating,
-    RatingPeriodSystem, RatingSystem, TeamRatingSystem,
+    MultiTeamOutcome, MultiTeamRatingSystem, Outcomes, Rating, RatingPeriodSystem, RatingSystem,
+    TeamRatingSystem, trueskill::TrueSkillRating,
 };
 use std::cmp::Ordering;
 
@@ -270,8 +270,8 @@ impl MultiTeamRatingSystem for WengLin {
 /// # Examples
 /// ```
 /// use skillratings::{
-///     weng_lin::{weng_lin, WengLinConfig, WengLinRating},
 ///     Outcomes,
+///     weng_lin::{WengLinConfig, WengLinRating, weng_lin},
 /// };
 ///
 /// let player_one = WengLinRating {
@@ -347,8 +347,8 @@ pub fn weng_lin(
 /// # Examples
 /// ```
 /// use skillratings::{
-///     weng_lin::{weng_lin_rating_period, WengLinConfig, WengLinRating},
 ///     Outcomes,
+///     weng_lin::{WengLinConfig, WengLinRating, weng_lin_rating_period},
 /// };
 ///
 /// let player = WengLinRating::new();
@@ -414,8 +414,8 @@ pub fn weng_lin_rating_period(
 /// # Examples
 /// ```
 /// use skillratings::{
-///     weng_lin::{weng_lin_two_teams, WengLinConfig, WengLinRating},
 ///     Outcomes,
+///     weng_lin::{WengLinConfig, WengLinRating, weng_lin_two_teams},
 /// };
 ///
 /// let team_one = vec![
@@ -442,8 +442,12 @@ pub fn weng_lin_rating_period(
 ///     },
 /// ];
 ///
-/// let (new_one, new_two) =
-///     weng_lin_two_teams(&team_one, &team_two, &Outcomes::SUCCESSFUL, &WengLinConfig::new());
+/// let (new_one, new_two) = weng_lin_two_teams(
+///     &team_one,
+///     &team_two,
+///     &Outcomes::SUCCESSFUL,
+///     &WengLinConfig::new(),
+/// );
 ///
 /// assert!(((new_one[0].rating * 100.0).round() - 2790.0).abs() < f64::EPSILON);
 /// assert!(((new_one[1].rating * 100.0).round() - 3006.0).abs() < f64::EPSILON);
@@ -562,8 +566,8 @@ pub fn weng_lin_two_teams(
 /// # Examples
 /// ```
 /// use skillratings::{
-///     weng_lin::{weng_lin_multi_team, WengLinConfig, WengLinRating},
 ///     MultiTeamOutcome,
+///     weng_lin::{WengLinConfig, WengLinRating, weng_lin_multi_team},
 /// };
 ///
 /// let team_one = vec![
@@ -733,7 +737,7 @@ pub fn weng_lin_multi_team(
 ///
 /// # Examples
 /// ```
-/// use skillratings::weng_lin::{expected_score, WengLinConfig, WengLinRating};
+/// use skillratings::weng_lin::{WengLinConfig, WengLinRating, expected_score};
 ///
 /// let p1 = WengLinRating {
 ///     rating: 42.0,
@@ -780,7 +784,7 @@ pub fn expected_score(
 ///
 /// # Examples
 /// ```
-/// use skillratings::weng_lin::{expected_score_two_teams, WengLinConfig, WengLinRating};
+/// use skillratings::weng_lin::{WengLinConfig, WengLinRating, expected_score_two_teams};
 ///
 /// let team_one = vec![
 ///     WengLinRating {
@@ -845,7 +849,7 @@ pub fn expected_score_two_teams(
 ///
 /// # Examples
 /// ```
-/// use skillratings::weng_lin::{expected_score_multi_team, WengLinConfig, WengLinRating};
+/// use skillratings::weng_lin::{WengLinConfig, WengLinRating, expected_score_multi_team};
 ///
 /// let team_one = vec![
 ///     WengLinRating {
@@ -935,7 +939,7 @@ pub fn expected_score_multi_team(teams: &[&[WengLinRating]], config: &WengLinCon
 ///
 /// # Examples
 /// ```
-/// use skillratings::weng_lin::{expected_score_rating_period, WengLinConfig, WengLinRating};
+/// use skillratings::weng_lin::{WengLinConfig, WengLinRating, expected_score_rating_period};
 ///
 /// let player = WengLinRating {
 ///     rating: 19.0,

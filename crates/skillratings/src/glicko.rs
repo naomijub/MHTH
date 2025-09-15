@@ -15,8 +15,8 @@
 //!
 //! ```
 //! use skillratings::{
-//!     glicko::{glicko, GlickoConfig, GlickoRating},
 //!     Outcomes,
+//!     glicko::{GlickoConfig, GlickoRating, glicko},
 //! };
 //!
 //! // Initialise a new player rating with a rating of 1500 and a deviation of 350.
@@ -52,8 +52,8 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    glicko2::Glicko2Rating, glicko_boost::GlickoBoostRating, sticko::StickoRating, Outcomes,
-    Rating, RatingPeriodSystem, RatingSystem,
+    Outcomes, Rating, RatingPeriodSystem, RatingSystem, glicko_boost::GlickoBoostRating,
+    glicko2::Glicko2Rating, sticko::StickoRating,
 };
 use std::f64::consts::PI;
 
@@ -228,8 +228,8 @@ impl RatingPeriodSystem for Glicko {
 /// # Examples
 /// ```
 /// use skillratings::{
-///     glicko::{glicko, GlickoConfig, GlickoRating},
 ///     Outcomes,
+///     glicko::{GlickoConfig, GlickoRating, glicko},
 /// };
 ///
 /// let player_one = GlickoRating {
@@ -328,8 +328,8 @@ pub fn glicko(
 /// # Examples
 /// ```
 /// use skillratings::{
-///     glicko::{glicko_rating_period, GlickoConfig, GlickoRating},
 ///     Outcomes,
+///     glicko::{GlickoConfig, GlickoRating, glicko_rating_period},
 /// };
 ///
 /// let player = GlickoRating {
@@ -423,7 +423,7 @@ pub fn glicko_rating_period(
 ///
 /// # Examples
 /// ```
-/// use skillratings::glicko::{expected_score, GlickoRating};
+/// use skillratings::glicko::{GlickoRating, expected_score};
 ///
 /// let player_one = GlickoRating {
 ///     rating: 2500.0,
@@ -457,7 +457,7 @@ pub fn expected_score(player_one: &GlickoRating, player_two: &GlickoRating) -> (
 ///
 /// # Examples
 /// ```
-/// use skillratings::glicko::{expected_score_rating_period, GlickoRating};
+/// use skillratings::glicko::{GlickoRating, expected_score_rating_period};
 ///
 /// let player = GlickoRating {
 ///     rating: 1900.0,
@@ -500,7 +500,7 @@ pub fn expected_score_rating_period(player: &GlickoRating, opponents: &[GlickoRa
 ///
 /// # Examples
 /// ```
-/// use skillratings::glicko::{decay_deviation, GlickoConfig, GlickoRating};
+/// use skillratings::glicko::{GlickoConfig, GlickoRating, decay_deviation};
 ///
 /// let player_one = GlickoRating {
 ///     rating: 2720.0,
@@ -531,7 +531,7 @@ pub fn decay_deviation(player: &GlickoRating, config: &GlickoConfig) -> GlickoRa
 ///
 /// # Examples
 /// ```
-/// use skillratings::glicko::{confidence_interval, GlickoRating};
+/// use skillratings::glicko::{GlickoRating, confidence_interval};
 ///
 /// let player = GlickoRating {
 ///     rating: 2250.0,
