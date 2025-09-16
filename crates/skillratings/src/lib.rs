@@ -24,6 +24,7 @@ pub mod elo;
 pub mod glicko;
 pub mod glicko2;
 pub mod glicko_boost;
+pub mod mhth;
 pub mod sticko;
 pub mod trueskill;
 pub mod weng_lin;

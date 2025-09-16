@@ -88,6 +88,7 @@ use matrix::Matrix;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
+use crate::mhth::MhthRating;
 use crate::{
     MultiTeamOutcome, MultiTeamRatingSystem, Rating, RatingPeriodSystem, RatingSystem,
     TeamRatingSystem,
@@ -154,6 +155,15 @@ impl From<WengLinRating> for TrueSkillRating {
     fn from(w: WengLinRating) -> Self {
         Self {
             rating: w.rating,
+            uncertainty: w.uncertainty,
+        }
+    }
+}
+
+impl From<MhthRating> for TrueSkillRating {
+    fn from(w: MhthRating) -> Self {
+        Self {
+            rating: w.rating + w.loadout_modifier,
             uncertainty: w.uncertainty,
         }
     }

@@ -73,7 +73,7 @@ let player_one = Glicko2Rating::new();
 // Or you can initialise it with your own values of course.
 // Imagine these numbers being pulled from a database.
 let (some_rating, some_deviation, some_volatility) = (1325.0, 230.0, 0.05932);
-let player_two = Glicko2Rating {
+let environment = Glicko2Rating {
     rating: some_rating,
     deviation: some_deviation,
     volatility: some_volatility,
@@ -86,7 +86,7 @@ let outcome = Outcomes::SUCCESSFUL;
 let config = Glicko2Config::new();
 
 // The glicko2 function will calculate the new ratings for both players and return them.
-let (new_player_one, new_player_two) = glicko2(&player_one, &player_two, &outcome, &config);
+let (new_player_one, new_environment) = glicko2(&player_one, &environment, &outcome, &config);
 
 // The first players rating increased by ~112 points.
 assert_eq!(new_player_one.rating.round(), 1612.0);
@@ -122,7 +122,7 @@ let team_one = vec![
 
 // Team Two will be made up of 3 new players, for simplicity.
 // Note that teams do not necessarily have to be the same size.
-let team_two = vec![
+let environment = vec![
     TrueSkillRating::new(),
     TrueSkillRating::new(),
     TrueSkillRating::new(),
@@ -135,7 +135,7 @@ let outcome = Outcomes::FAILURE;
 let config = TrueSkillConfig::new();
 
 // The trueskill_two_teams function will calculate the new ratings for both teams and return them.
-let (new_team_one, new_team_two) = trueskill_two_teams(&team_one, &team_two, &outcome, &config);
+let (new_team_one, new_environment) = trueskill_two_teams(&team_one, &environment, &outcome, &config);
 
 // The rating of the first player on team one decreased by around ~1.2 points.
 assert_eq!(new_team_one[0].rating.round(), 32.0);
@@ -170,7 +170,7 @@ let team_one = vec![
     },
 ];
 
-let team_two = vec![
+let environment = vec![
     WengLinRating {
         rating: 44.0,
         uncertainty: 1.2,
@@ -196,7 +196,7 @@ let team_three = vec![
 // If two or more teams tie with each other, assign them the same rank.
 let rating_groups = vec![
     (&team_one[..], MultiTeamOutcome::new(1)),      // team one takes the 1st place.
-    (&team_two[..], MultiTeamOutcome::new(3)),      // team two takes the 3rd place.
+    (&environment[..], MultiTeamOutcome::new(3)),      // team two takes the 3rd place.
     (&team_three[..], MultiTeamOutcome::new(2)),    // team three takes the 2nd place.
 ];
 
@@ -220,7 +220,7 @@ use skillratings::glicko::{expected_score, GlickoRating};
 let player_one = GlickoRating::new();
 
 // Initialising a new rating with custom numbers.
-let player_two = GlickoRating {
+let environment = GlickoRating {
     rating: 1812.0,
     deviation: 195.0,
 };
@@ -228,7 +228,7 @@ let player_two = GlickoRating {
 // The expected_score function will return two floats between 0 and 1 for each player.
 // A value of 1 means guaranteed victory, 0 means certain loss.
 // Values near 0.5 mean draws are likely to occur.
-let (exp_one, exp_two) = expected_score(&player_one, &player_two);
+let (exp_one, exp_two) = expected_score(&player_one, &environment);
 
 // The expected score for player one is ~0.25.
 // If these players would play 100 games, player one is expected to score around 25 points.
@@ -292,7 +292,7 @@ use skillratings::{
 let player_one = Rating::new(Some(1200.0), Some(120.0));
 // Some rating systems might use widely different scales for measuring a player's skill.
 // So if you always want the default values for every rating system, use None instead.
-let player_two = Rating::new(None, None);
+let environment = Rating::new(None, None);
 
 // The config needs to be specific to the rating system.
 // When you swap rating systems, make sure to update the config.
@@ -306,9 +306,9 @@ let rating_system: Glicko2 = RatingSystem::new(config);
 let outcome = Outcomes::SUCCESSFUL;
 
 // Calculate the expected score of the match.
-let expected_score = rating_system.expected_score(&player_one, &player_two);
+let expected_score = rating_system.expected_score(&player_one, &environment);
 // Calculate the new ratings.
-let (new_one, new_two) = rating_system.rate(&player_one, &player_two, &outcome);
+let (new_one, new_two) = rating_system.rate(&player_one, &environment, &outcome);
 
 // After that, access new ratings and uncertainties with the functions below.
 assert_eq!(new_one.rating().round(), 1241.0);
