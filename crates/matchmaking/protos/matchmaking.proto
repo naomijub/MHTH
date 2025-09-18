@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package matchmaking;
+
+// Empty message representing void state
+message Empty {}
+
+message HealthCheckRequest {
+  string service = 1;
+}
+
+message HealthCheckResponse {
+  enum ServingStatus {
+    NOT_FOUND = 0;
+    SERVING = 1;
+    NOT_SERVING = 2;
+    SERVICE_UNKNOWN = 3;  // Used only by the Watch method.
+    DEPRECATED = 4;
+  }
+  ServingStatus status = 1;
+}
+
+// Player join mode, defines how the player wants to join a room
+enum JoinMode {
+    // Only accepts to create a new room
+    CreateRoom = 0;
+    // Only accepts to join an existing room
+    JoinRoom = 1;
+    // Accepts to create or join an existing room
+    JoinOrCreateRoom = 2;
+}
+
+// Requesting player information
+message Player {
+    string player_id = 1;
+    string loadout_config = 2;
+    string region = 3;
+    int32 ping = 4;
+    int32 difficulty = 5;
+    JoinMode join_mode = 6;
+}
+
+service MatchmakingService {
+    rpc join_queue (Player) returns (Empty);
+
+
+
+
+
+
+  rpc Check(HealthCheckRequest) returns (HealthCheckResponse);
+
+  // Performs a watch for the serving status of the requested service.
+  // The server will immediately send back a message indicating the current
+  // serving status.  It will then subsequently send a new message whenever
+  // the service's serving status changes.
+  //
+  // If the requested service is unknown when the call is received, the
+  // server will send a message setting the serving status to
+  // SERVICE_UNKNOWN but will *not* terminate the call.  If at some
+  // future point, the serving status of the service becomes known, the
+  // server will send a new message with the service's serving status.
+  //
+  // If the call terminates with status UNIMPLEMENTED, then clients
+  // should assume this method is not supported and should not retry the
+  // call.  If the call terminates with any other status (including OK),
+  // clients should retry the call with appropriate exponential backoff.
+  rpc Watch(HealthCheckRequest) returns (stream HealthCheckResponse);
+}

@@ -1,0 +1,28 @@
+[package]
+name = "matchmaking"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+skillratings.workspace = true
+
+crc = "3.3"
+prost = "0.14.1"
+redis = { version = "0.32.5", features = ["tokio-comp"] }
+tokio = { version = "1.47.1", features = ["full"] }
+tokio-stream = "0.1"
+tonic-types = "0.14"
+tonic-prost = "0.14"
+tonic = "0.14.2"
+
+dotenv.workspace = true
+reqwest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+uuid.workspace = true
+
+[build-dependencies]
+tonic-prost-build = "0.14.1"

@@ -1,0 +1,8 @@
+name: Nakama
+logger:
+  level: ERROR
+socket:
+  server_key: abcde123
+  port: 7350
+metrics:
+  prometheus_port: 9100
