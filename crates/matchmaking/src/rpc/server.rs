@@ -13,7 +13,9 @@ pub use super::matchmaking::matchmaking_service_server::MatchmakingServiceServer
 use crate::{
     nakama::{self, Authenticated},
     rpc::{
-        helper::{time_since, IntoTonicError}, matchmaking::{HealthCheckRequest, HealthCheckResponse, JoinQueueResponse, Player}, QueuedPlayer
+        QueuedPlayer,
+        helper::{IntoTonicError, time_since},
+        matchmaking::{HealthCheckRequest, HealthCheckResponse, JoinQueueResponse, Player},
     },
 };
 
@@ -72,14 +74,14 @@ impl MatchmakingService for MatchmakingServer {
         );
 
         let dt = Local::now();
-        let order = conn.zadd(
-            player_queue_key,
-            bitcode::encode(&data),
-            time_since(&dt)?,
-        )
-        .await
-        .inspect_err(|err| error!("Redis failed to queue player: {err}\n{err:?}"))
-        .to_tonic_error("Failed to add player to queue", Box::new(tonic::Status::internal))?;
+        let order = conn
+            .zadd(player_queue_key, bitcode::encode(&data), time_since(&dt)?)
+            .await
+            .inspect_err(|err| error!("Redis failed to queue player: {err}\n{err:?}"))
+            .to_tonic_error(
+                "Failed to add player to queue",
+                Box::new(tonic::Status::internal),
+            )?;
 
         debug!("Player: `{player_id}` Index: {order}");
         Ok(tonic::Response::new(JoinQueueResponse {

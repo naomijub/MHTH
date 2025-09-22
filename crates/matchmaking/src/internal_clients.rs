@@ -15,9 +15,9 @@ pub struct InternalClients {
 impl InternalClients {
     pub fn try_from_env() -> Result<Self, Error> {
         dotenv::dotenv()?;
-        let port = std::env::var("REDIS_PORT").unwrap_or_else(|_|"6379".to_string());
-        let user = std::env::var("REDIS_USER").unwrap_or_else(|_|"root".to_string());
-        let password = std::env::var("REDIS_PASSWORD").unwrap_or_else(|_|"password".to_string());
+        let port = std::env::var("REDIS_PORT").unwrap_or_else(|_| "6379".to_string());
+        let user = std::env::var("REDIS_USER").unwrap_or_else(|_| "root".to_string());
+        let password = std::env::var("REDIS_PASSWORD").unwrap_or_else(|_| "password".to_string());
         let redis = match std::env::var("REDIS_URL") {
             Ok(url) => redis::Client::open(format!("redis://{user}:{password}@{url}:{port}"))?,
             Err(_) => redis::Client::open(format!("redis://{user}:{password}@localhost:{port}"))?,
@@ -30,7 +30,7 @@ impl InternalClients {
         Ok(self.redis.get_multiplexed_tokio_connection().await?)
     }
 
-    pub fn http_client(&self) -> &reqwest::Client  {
+    pub fn http_client(&self) -> &reqwest::Client {
         &self.http_client
     }
 }

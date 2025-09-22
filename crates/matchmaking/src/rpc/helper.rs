@@ -26,13 +26,14 @@ impl<T, E: Debug> IntoTonicError<T> for Result<T, E> {
 }
 
 pub fn time_since(dt: &DateTime<Local>) -> Result<i64, tonic::Status> {
-    Ok(dt.naive_utc()
-    .signed_duration_since(
-        GAME_START
-            .and_then(|dt| dt.and_hms_opt(0, 0, 0))
-            .ok_or_else(|| tonic::Status::internal("Failed define time of player join"))?,
-    )
-    .num_seconds())
+    Ok(dt
+        .naive_utc()
+        .signed_duration_since(
+            GAME_START
+                .and_then(|dt| dt.and_hms_opt(0, 0, 0))
+                .ok_or_else(|| tonic::Status::internal("Failed define time of player join"))?,
+        )
+        .num_seconds())
 }
 
 #[cfg(test)]

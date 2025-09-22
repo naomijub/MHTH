@@ -5,7 +5,8 @@ use tracing::{debug, error};
 
 use crate::nakama::{
     endpoints::{
-        AuthRequestBody, AuthResponseBody, CreateUserRequestBody, HealthcheckResponse, RpcResponse, AUTH_PATH, HEALTHCHECK_PATH, NEW_USER
+        AUTH_PATH, AuthRequestBody, AuthResponseBody, CreateUserRequestBody, HEALTHCHECK_PATH,
+        HealthcheckResponse, NEW_USER, RpcResponse,
     },
     helpers::{
         get_env_endpoint, get_env_password, get_env_server_key_name, get_env_server_key_value,
@@ -74,8 +75,12 @@ impl NakamaClient<DefaultNakama> {
 }
 
 impl NakamaClient<NoUserRegistered> {
-    pub async fn register_admin(self, http_client: &reqwest::Client) -> Result<NakamaClient<Unauthenticated>, Error> {
-        let new_admin = CreateUserRequestBody::new_admin(self.username.clone(), self.password.clone());
+    pub async fn register_admin(
+        self,
+        http_client: &reqwest::Client,
+    ) -> Result<NakamaClient<Unauthenticated>, Error> {
+        let new_admin =
+            CreateUserRequestBody::new_admin(self.username.clone(), self.password.clone());
         let body = serde_json::to_string(&new_admin)?;
 
         let res = http_client
@@ -89,23 +94,23 @@ impl NakamaClient<NoUserRegistered> {
             .inspect_err(|err| error!("Req Admin Err: {err:?}"));
 
         if let Ok(res) = res {
-            let _ = res.text().await
-            // TODO: Remove
-            .inspect(|body| debug!("Body Admin: {body:?}"))
-            .inspect_err(|err| error!("Body Admin Err: {err:?}"));
+            let _ = res
+                .text()
+                .await
+                // TODO: Remove
+                .inspect(|body| debug!("Body Admin: {body:?}"))
+                .inspect_err(|err| error!("Body Admin Err: {err:?}"));
         }
-        
-        Ok(
-            NakamaClient {
-                username: self.username,
-                password: self.password,
-                token: self.token,
-                url: self.url,
-                server_key_name: self.server_key_name,
-                server_key_value: self.server_key_value,
-                _state: PhantomData::<Unauthenticated>,
-            }
-        )
+
+        Ok(NakamaClient {
+            username: self.username,
+            password: self.password,
+            token: self.token,
+            url: self.url,
+            server_key_name: self.server_key_name,
+            server_key_value: self.server_key_value,
+            _state: PhantomData::<Unauthenticated>,
+        })
     }
 }
 
@@ -154,7 +159,10 @@ impl NakamaClient<Authenticated> {
             .as_ref()
             .expect("Client is already authenticated");
         let response: RpcResponse<HealthcheckResponse> = http_client
-            .request(HEALTHCHECK_PATH.0,format!("{}{}", self.url, HEALTHCHECK_PATH.1))
+            .request(
+                HEALTHCHECK_PATH.0,
+                format!("{}{}", self.url, HEALTHCHECK_PATH.1),
+            )
             .bearer_auth(token)
             .send()
             .await

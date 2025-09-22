@@ -1,11 +1,11 @@
-use std::str::FromStr;
-use std::net::ToSocketAddrs;
+use std::{net::ToSocketAddrs, str::FromStr};
 
-use matchmaking::{internal_clients::InternalClients, nakama::NakamaClient, rpc::{
-    server::{MatchmakingServer, MatchmakingServiceServer},
-}};
+use matchmaking::{
+    internal_clients::InternalClients,
+    nakama::NakamaClient,
+    rpc::server::{MatchmakingServer, MatchmakingServiceServer},
+};
 use tonic::transport::Server;
-
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -15,14 +15,16 @@ async fn main() -> anyhow::Result<()> {
         .unwrap_or(tracing::Level::DEBUG);
     tracing_subscriber::fmt()
         .with_max_level(log_level)
-        .try_init().unwrap();
+        .try_init()
+        .unwrap();
     let clients = InternalClients::try_from_env()?;
     let nakama_client = NakamaClient::try_new()?
-        .authenticate(clients.http_client()).await?;
-    let matchmaking_server = MatchmakingServer{ 
-        redis: clients.redis, 
-        http_client: clients.http_client, 
-        nakama_client 
+        .authenticate(clients.http_client())
+        .await?;
+    let matchmaking_server = MatchmakingServer {
+        redis: clients.redis,
+        http_client: clients.http_client,
+        nakama_client,
     };
 
     let server = MatchmakingServiceServer::new(matchmaking_server);

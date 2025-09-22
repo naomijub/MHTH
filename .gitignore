@@ -1,6 +1,9 @@
 # Rust
 /target
 
+# Redis
+data/
+
 # Go
 # Test binary, built with `go test -c`
 **/*.test

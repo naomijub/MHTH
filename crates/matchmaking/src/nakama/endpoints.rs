@@ -1,9 +1,13 @@
-use serde::{de::{self, DeserializeOwned}, Deserialize, Deserializer, Serialize};
+use serde::{
+    Deserialize, Deserializer, Serialize,
+    de::{self, DeserializeOwned},
+};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct RpcResponse<T>
 where
-    T: serde::de::DeserializeOwned + serde::Serialize {
+    T: serde::de::DeserializeOwned + serde::Serialize,
+{
     #[serde(deserialize_with = "de_from_str")]
     pub body: T,
     pub error_message: String,
@@ -21,8 +25,10 @@ where
     serde_json::from_str(&s).map_err(de::Error::custom)
 }
 
-
-pub const HEALTHCHECK_PATH: (reqwest::Method, &str) = (reqwest::Method::POST, "/v2/console/api/endpoints/rpc/healthcheck");
+pub const HEALTHCHECK_PATH: (reqwest::Method, &str) = (
+    reqwest::Method::POST,
+    "/v2/console/api/endpoints/rpc/healthcheck",
+);
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct HealthcheckResponse {
@@ -46,21 +52,21 @@ pub const NEW_USER: (reqwest::Method, &str) = (reqwest::Method::POST, "/v2/conso
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct CreateUserRequestBody {
-  username: String,
-  password: String,
-  email: String,
-  role: String,
-  newsletter_subscription: bool
+    username: String,
+    password: String,
+    email: String,
+    role: String,
+    newsletter_subscription: bool,
 }
 
 impl Default for CreateUserRequestBody {
     fn default() -> Self {
-        Self { 
-            username: Default::default(), 
-            password: Default::default(), 
-            email: "nakama.admin@mhth.net".to_string(), 
-            role: "USER_ROLE_ADMIN".to_string(), 
-            newsletter_subscription: false
+        Self {
+            username: Default::default(),
+            password: Default::default(),
+            email: "nakama.admin@mhth.net".to_string(),
+            role: "USER_ROLE_ADMIN".to_string(),
+            newsletter_subscription: false,
         }
     }
 }
@@ -68,7 +74,9 @@ impl Default for CreateUserRequestBody {
 impl CreateUserRequestBody {
     pub fn new_admin(username: String, password: String) -> Self {
         Self {
-            username, password, ..Default::default()
+            username,
+            password,
+            ..Default::default()
         }
     }
 }

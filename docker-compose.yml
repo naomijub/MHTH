@@ -61,17 +61,17 @@ services:
       timeout: 3s
       retries: 5
   redis_mms:
-    image: redis/redis-stack-server:7.2.0-v18
+    image: redis:8.2.1-bookworm
     container_name: redis_mms
     restart: always
     expose:
       - "6379"
-    environment:
-      REDIS_ARGS: "--requirepass eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81 --user redis_mms_admin on +@all -DEBUG ~* >eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81 --user default off nopass nocommands"
     volumes:
       - ./data/redis:/data
-    #   - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
-    # command: redis-server /usr/local/etc/redis/redis.conf
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+    command:
+      - redis-server
+      - "/usr/local/etc/redis/redis.conf"
     healthcheck:
       test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
       interval: 5s

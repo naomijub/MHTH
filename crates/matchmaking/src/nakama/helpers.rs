@@ -61,7 +61,6 @@ pub(super) fn get_env_server_key_value() -> String {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::get_password;
