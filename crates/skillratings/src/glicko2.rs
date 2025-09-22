@@ -53,6 +53,8 @@
 //! - [Original Paper by Mark Glickman](http://www.glicko.net/glicko/glicko2.pdf)
 //! - [Glicko-2 Calculator](https://glicko2-calculator.streamlit.app/)
 
+use std::f64::consts::PI;
+
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -60,7 +62,6 @@ use crate::{
     Outcomes, Rating, RatingPeriodSystem, RatingSystem, glicko::GlickoRating,
     glicko_boost::GlickoBoostRating, sticko::StickoRating,
 };
-use std::f64::consts::PI;
 
 /// The Glicko-2 rating of a player.
 ///

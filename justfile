@@ -20,3 +20,11 @@ nakama-up:
 
 nakama-down:
     docker compose -f nakama/local-nakama.yml down
+
+
+server-up:
+    docker compose build --no-cache
+    docker compose up --build --force-recreate 
+
+server-down:
+    docker compose down

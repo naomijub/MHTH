@@ -14,12 +14,9 @@ serde = ["dep:serde"]
 default = ["serde"]
 
 [dependencies]
+bitcode = {version = "0.6.7", features = ["serde"] }
 serde = { version = "1.0", optional = true, features = ["derive"] }
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
 assert-eq-float = "0.1.4"
-
-[[bench]]
-name = "bench_main"
-harness = false

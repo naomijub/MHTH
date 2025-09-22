@@ -62,6 +62,8 @@
 //! - [Logistic distribution Wikipedia](https://en.wikipedia.org/wiki/Logistic_distribution)
 //! - [OpenSkill (Python Package)](https://openskill.me/en/stable/)
 
+use std::cmp::Ordering;
+
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -69,7 +71,6 @@ use crate::{
     MultiTeamOutcome, MultiTeamRatingSystem, Outcomes, Rating, RatingPeriodSystem, RatingSystem,
     TeamRatingSystem, trueskill::TrueSkillRating,
 };
-use std::cmp::Ordering;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]

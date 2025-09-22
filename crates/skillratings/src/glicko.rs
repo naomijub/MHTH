@@ -48,6 +48,8 @@
 //! - [Original Paper by Mark Glickman](http://www.glicko.net/glicko/glicko.pdf)
 //! - [Glicko Calculator](http://www.bjcox.com/?page_id=2)
 
+use std::f64::consts::PI;
+
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -55,7 +57,6 @@ use crate::{
     Outcomes, Rating, RatingPeriodSystem, RatingSystem, glicko_boost::GlickoBoostRating,
     glicko2::Glicko2Rating, sticko::StickoRating,
 };
-use std::f64::consts::PI;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]

@@ -78,9 +78,11 @@ mod factor_graph;
 mod gaussian;
 mod matrix;
 
-use std::cell::RefCell;
-use std::f64::consts::{FRAC_1_SQRT_2, PI, SQRT_2};
-use std::rc::Rc;
+use std::{
+    cell::RefCell,
+    f64::consts::{FRAC_1_SQRT_2, PI, SQRT_2},
+    rc::Rc,
+};
 
 use factor_graph::{LikelihoodFactor, PriorFactor, SumFactor, TruncateFactor, Variable};
 use gaussian::Gaussian;
@@ -88,12 +90,10 @@ use matrix::Matrix;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-use crate::mhth::MhthRating;
 use crate::{
-    MultiTeamOutcome, MultiTeamRatingSystem, Rating, RatingPeriodSystem, RatingSystem,
-    TeamRatingSystem,
+    MultiTeamOutcome, MultiTeamRatingSystem, Outcomes, Rating, RatingPeriodSystem, RatingSystem,
+    TeamRatingSystem, mhth::MhthRating, weng_lin::WengLinRating,
 };
-use crate::{Outcomes, weng_lin::WengLinRating};
 
 const MIN_DELTA: f64 = 0.0001;
 
@@ -1604,7 +1604,7 @@ fn inverse_erfc(y: f64) -> f64 {
 
     for _ in 0..2 {
         let err = erfc(x) - y;
-        x += err / 1.128_379_167_095_512_57f64.mul_add((-(x.powi(2))).exp(), -x * err);
+        x += err / std::f64::consts::FRAC_2_SQRT_PI.mul_add((-(x.powi(2))).exp(), -x * err);
     }
 
     if zero_point { x } else { -x }
@@ -1852,9 +1852,8 @@ fn team_sizes(teams_and_ranks: &[(&[TrueSkillRating], MultiTeamOutcome)]) -> Vec
 
 #[cfg(test)]
 mod tests {
-    use crate::MultiTeamOutcome;
-
     use super::*;
+    use crate::MultiTeamOutcome;
 
     #[test]
     /// This example is taken from this presentation (Page 20):

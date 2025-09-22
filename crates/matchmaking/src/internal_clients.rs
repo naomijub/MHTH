@@ -1,7 +1,7 @@
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("Redis error: {0}")]
-    RedisError(#[from]redis::RedisError),
+    RedisError(#[from] redis::RedisError),
     #[error("Failed to load .env: {0}")]
     DotenvError(#[from] dotenv::Error),
 }
@@ -15,9 +15,12 @@ pub struct InternalClients {
 impl InternalClients {
     pub fn try_from_env() -> Result<Self, Error> {
         dotenv::dotenv()?;
+        let port = std::env::var("REDIS_PORT").unwrap_or_else(|_|"6379".to_string());
+        let user = std::env::var("REDIS_USER").unwrap_or_else(|_|"root".to_string());
+        let password = std::env::var("REDIS_PASSWORD").unwrap_or_else(|_|"password".to_string());
         let redis = match std::env::var("REDIS_URL") {
-            Ok(url) => redis::Client::open(url)?,
-            Err(_) => redis::Client::open("redis://localhost")?,
+            Ok(url) => redis::Client::open(format!("redis://{user}:{password}@{url}:{port}"))?,
+            Err(_) => redis::Client::open(format!("redis://{user}:{password}@localhost:{port}"))?,
         };
         let http_client = reqwest::Client::new();
         Ok(Self { redis, http_client })
@@ -25,5 +28,19 @@ impl InternalClients {
 
     pub async fn redis(&self) -> Result<redis::aio::MultiplexedConnection, Error> {
         Ok(self.redis.get_multiplexed_tokio_connection().await?)
+    }
+
+    pub fn http_client(&self) -> &reqwest::Client  {
+        &self.http_client
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn should_load() {
+        assert!(InternalClients::try_from_env().is_ok())
     }
 }

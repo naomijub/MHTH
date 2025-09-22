@@ -1,26 +1,23 @@
 services:
-  cockroachdb:
-    image: cockroachdb/cockroach:latest-v24.1
-    command: start-single-node --insecure --store=attrs=ssd,path=/var/lib/cockroach/
-    restart: "no"
-    volumes:
-      - data:/var/lib/cockroach
-    expose:
-      - "8080"
-      - "26257"
-    ports:
-      - "26257:26257"
-      - "8080:8080"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health?ready=1"]
-      interval: 3s
-      timeout: 3s
-      retries: 5
-  nakama:
+  matchmaking_service:
     build: 
       context: .
       dockerfile: Dockerfile
-    container_name: nakama_local
+    container_name: matchmaking_service
+    expose:
+      - "50051"
+    ports:
+      - "50051:50051"
+    depends_on:
+      redis_mms:
+        condition: service_healthy
+      nakama_mms:
+        condition: service_healthy
+  nakama_mms:
+    build: 
+      context: ./nakama
+      dockerfile: Dockerfile
+    container_name: nakama_mms
     entrypoint:
       - "/bin/sh"
       - "-ecx"
@@ -49,6 +46,37 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  cockroachdb:
+    image: cockroachdb/cockroach:latest-v24.1
+    command: start-single-node --insecure --store=attrs=ssd,path=/var/lib/cockroach/
+    restart: "no"
+    volumes:
+      - data:/var/lib/cockroach
+    expose:
+      - "8080"
+      - "26257"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health?ready=1"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+  redis_mms:
+    image: redis/redis-stack-server:7.2.0-v18
+    container_name: redis_mms
+    restart: always
+    expose:
+      - "6379"
+    environment:
+      REDIS_ARGS: "--requirepass eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81 --user redis_mms_admin on +@all -DEBUG ~* >eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81 --user default off nopass nocommands"
+    volumes:
+      - ./data/redis:/data
+    #   - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+    # command: redis-server /usr/local/etc/redis/redis.conf
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
   prometheus:
     image: prom/prometheus
     entrypoint: /bin/sh -c
@@ -74,4 +102,4 @@ services:
     ports:
       - '9090:9090'
 volumes:
-  data:
+  data: 

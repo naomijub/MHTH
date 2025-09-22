@@ -1,5 +1,7 @@
-use std::cmp::Ordering;
-use std::ops::{Div, Mul};
+use std::{
+    cmp::Ordering,
+    ops::{Div, Mul},
+};
 
 #[derive(Copy, Clone, Debug, Default, PartialEq)]
 pub struct Gaussian {

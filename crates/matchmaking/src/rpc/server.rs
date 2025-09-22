@@ -1,53 +1,104 @@
 use std::time::Duration;
 
-use redis::AsyncCommands;
+use chrono::{Local, NaiveDate};
+use redis::AsyncTypedCommands;
 use tokio::sync::mpsc;
-use tokio_stream::{wrappers::ReceiverStream, StreamExt};
+use tokio_stream::{StreamExt, wrappers::ReceiverStream};
 use tonic::{Request, Status};
 use tracing::{debug, error};
 use uuid::Uuid;
 
-use crate::{nakama, rpc::{matchmaking::{Empty, HealthCheckRequest, HealthCheckResponse, Player}, server::healthcheck::ServingStatus, QueuedPlayer}};
-
-use super::matchmaking::matchmaking_service_server::{MatchmakingService, SERVICE_NAME};
-
+use super::matchmaking::matchmaking_service_server::MatchmakingService;
 pub use super::matchmaking::matchmaking_service_server::MatchmakingServiceServer;
+use crate::{
+    nakama::{self, Authenticated},
+    rpc::{
+        helper::{time_since, IntoTonicError}, matchmaking::{HealthCheckRequest, HealthCheckResponse, JoinQueueResponse, Player}, QueuedPlayer
+    },
+};
 
 pub mod healthcheck;
+
+pub(crate) static GAME_START: Option<NaiveDate> = NaiveDate::from_yo_opt(2025, 1);
 
 #[derive(Debug, Clone)]
 pub struct MatchmakingServer {
     pub redis: redis::Client,
     pub http_client: reqwest::Client,
-    pub nakama_client: nakama::NakamaClient,
+    pub nakama_client: nakama::NakamaClient<Authenticated>,
 }
 
 #[tonic::async_trait]
 impl MatchmakingService for MatchmakingServer {
     type WatchStream = healthcheck::ResponseStream;
 
-    async fn join_queue(&self, request: Request<Player>) -> Result<tonic::Response<Empty>, tonic::Status> {
-        let player_id = Uuid::parse_str(&request.get_ref().player_id)
-            .inspect_err(|err| error!("{:?}", err))
-            .map_err(|_| tonic::Status::invalid_argument(format!("Invalid player id: {}", request.get_ref().player_id)))?;
-        let skillrating = self.nakama_client.get_skill_rating(&self.http_client, &request.get_ref().player_id).await
-            .inspect_err(|err| error!("{:?}", err))
-            .map_err(|_| tonic::Status::internal("Nakama API failed"))?;
+    async fn join_queue(
+        &self,
+        request: Request<Player>,
+    ) -> Result<tonic::Response<JoinQueueResponse>, tonic::Status> {
+        let player_id = Uuid::parse_str(&request.get_ref().player_id).to_tonic_error(
+            format!("Invalid player id: {}", request.get_ref().player_id),
+            Box::new(tonic::Status::invalid_argument),
+        )?;
+        let skillrating = self
+            .nakama_client
+            .get_skill_rating(&self.http_client, &request.get_ref().player_id)
+            .await
+            .inspect_err(|err| error!("Nakama API failed: {err}\n{err:?}"))
+            .to_tonic_error("Nakama API failed", Box::new(tonic::Status::internal))?;
         let data: QueuedPlayer = (player_id, request.into_inner(), skillrating).into();
-        let conn = self.redis.get_multiplexed_tokio_connection().await
-            .inspect_err(|err| error!("{:?}", err))
-            .map_err(|_| 
-                tonic::Status::unavailable("Redis failed to connect")
+        let mut conn = self
+            .redis
+            .get_multiplexed_tokio_connection()
+            .await
+            .inspect_err(|err| error!("Redis failed to connect: {err}"))
+            .to_tonic_error(
+                "Redis failed to connect",
+                Box::new(tonic::Status::unavailable),
             )?;
-        
-        Ok(tonic::Response::new(Empty {}))
+        conn.set(player_id, bitcode::encode(&data))
+            .await
+            .inspect_err(|err| error!("Redis failed to save player: {err}"))
+            .to_tonic_error(
+                format!("Failed to save player `{player_id}` to redis"),
+                Box::new(tonic::Status::internal),
+            )?;
+
+        let player_queue_key = format!(
+            "queue:{}:{}:{}",
+            data.party_mode,
+            data.party_ids.len(),
+            data.region
+        );
+
+        let dt = Local::now();
+        let order = conn.zadd(
+            player_queue_key,
+            bitcode::encode(&data),
+            time_since(&dt)?,
+        )
+        .await
+        .inspect_err(|err| error!("Redis failed to queue player: {err}\n{err:?}"))
+        .to_tonic_error("Failed to add player to queue", Box::new(tonic::Status::internal))?;
+
+        debug!("Player: `{player_id}` Index: {order}");
+        Ok(tonic::Response::new(JoinQueueResponse {
+            player_id: player_id.to_string(),
+            status: "waiting in queue".to_string(),
+        }))
     }
 
-    async fn check(&self, request: Request<HealthCheckRequest>) -> Result<tonic::Response<HealthCheckResponse>, tonic::Status> {
+    async fn check(
+        &self,
+        request: Request<HealthCheckRequest>,
+    ) -> Result<tonic::Response<HealthCheckResponse>, tonic::Status> {
         Ok(tonic::Response::new(healthcheck::healthy(request)))
     }
 
-    async fn watch(&self, request: Request<HealthCheckRequest>) -> Result<tonic::Response<Self::WatchStream>, tonic::Status> {
+    async fn watch(
+        &self,
+        request: Request<HealthCheckRequest>,
+    ) -> Result<tonic::Response<Self::WatchStream>, tonic::Status> {
         debug!("MatchmakingServer::watch::healthcheck");
         debug!("\tclient connected from: {:?}", request.remote_addr());
 

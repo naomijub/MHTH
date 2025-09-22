@@ -30,6 +30,16 @@ enum JoinMode {
     JoinOrCreateRoom = 2;
 }
 
+// Player party mode, defines how many people are in the party
+enum PartyMode {
+    // Player is joining alone
+    Solo = 0;
+    // Player is joining with a party
+    Party = 1;
+    // Player is joining with a clan
+    Clan = 2;
+}
+
 // Requesting player information
 message Player {
     string player_id = 1;
@@ -38,10 +48,17 @@ message Player {
     int32 ping = 4;
     int32 difficulty = 5;
     JoinMode join_mode = 6;
+    PartyMode party_mode = 7;
+    repeated string party_member_id = 8;
+}
+
+message JoinQueueResponse {
+  string status = 1;
+  string player_id = 2;
 }
 
 service MatchmakingService {
-    rpc join_queue (Player) returns (Empty);
+    rpc join_queue (Player) returns (JoinQueueResponse);
 
 
 

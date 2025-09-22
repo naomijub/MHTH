@@ -8,21 +8,35 @@ skillratings.workspace = true
 
 crc = "3.3"
 prost = "0.14.1"
-redis = { version = "0.32.5", features = ["tokio-comp"] }
-tokio = { version = "1.47.1", features = ["full"] }
 tokio-stream = "0.1"
 tonic-types = "0.14"
 tonic-prost = "0.14"
 tonic = "0.14.2"
 
+bitcode = {version = "0.6.7", features = ["serde", "uuid"] }
+redis = { version = "0.32.5", features = ["tokio-comp", "uuid"] }
+tokio = { version = "1.47.1", features = ["full"] }
+
+chrono.workspace = true
 dotenv.workspace = true
 reqwest.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+serde_with.workspace = true
 thiserror.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
 uuid.workspace = true
 
+anyhow = {version = "1.0.99", optional = true}
+
 [build-dependencies]
 tonic-prost-build = "0.14.1"
+
+[features]
+anyhow = ["dep:anyhow"]
+
+[[bin]]
+name = "matchmaking-server"
+path = "src/bin/server.rs"
+required-features = ["anyhow"]

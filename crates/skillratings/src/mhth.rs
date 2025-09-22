@@ -60,6 +60,9 @@
 //! - [Logistic distribution Wikipedia](https://en.wikipedia.org/wiki/Logistic_distribution)
 //! - [OpenSkill (Python Package)](https://openskill.me/en/stable/)
 
+use std::cmp::Ordering;
+
+use bitcode::{Decode, Encode};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -67,9 +70,8 @@ use crate::{
     MultiTeamOutcome, MultiTeamRatingSystem, Outcomes, Rating, RatingPeriodSystem, RatingSystem,
     TeamRatingSystem, trueskill::TrueSkillRating,
 };
-use std::cmp::Ordering;
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Encode, Decode)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 /// The Weng-Lin-Julia rating of a player.
 ///
@@ -1193,8 +1195,9 @@ fn new_uncertainty_teams(
 }
 #[cfg(test)]
 mod tests {
-    use super::*;
     use assert_eq_float::assert_eq_float;
+
+    use super::*;
 
     #[test]
     fn test_progression() {
