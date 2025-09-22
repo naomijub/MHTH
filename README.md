@@ -12,8 +12,12 @@
 - Docker: [Get Docker](https://docs.docker.com/get-started/get-docker/)
 
 ## Usage
+
+### Development
 - In `nakama/` folder execute `go mod vendor`.
 - In `root/` folder execute `cargo build -r`.
+
+### Execution
 - Add a `.env` file to `crates/matchmaking/`.
     ```ini
     LOG_LEVEL=DEBUG
@@ -30,3 +34,4 @@
     REDIS_USER=redis_mms_admin
     REDIS_PASSWORD=<some password2>
     ```
+- execute `just server-up`
