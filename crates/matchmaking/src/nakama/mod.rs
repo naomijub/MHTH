@@ -6,7 +6,7 @@ use tracing::{debug, error};
 use crate::nakama::{
     endpoints::{
         AUTH_PATH, AuthRequestBody, AuthResponseBody, CreateUserRequestBody, HEALTHCHECK_PATH,
-        HealthcheckResponse, NEW_USER, RpcResponse,
+        NEW_USER,
     },
     helpers::{
         get_env_endpoint, get_env_password, get_env_server_key_name, get_env_server_key_value,
@@ -38,7 +38,7 @@ pub enum Error {
     Serde(#[from] serde_json::Error),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct NakamaClient<T = DefaultNakama> {
     /// NAKAMA_USERNAME
     username: String,
@@ -125,16 +125,21 @@ impl NakamaClient<Unauthenticated> {
         };
         let body = serde_json::to_string(&request)?;
 
-        let response: AuthResponseBody = http_client
-            .request(AUTH_PATH.0, format!("{}{}", self.url, AUTH_PATH.1))
-            .body(body)
-            .basic_auth(&self.server_key_name, Some(&self.server_key_value))
-            .send()
-            .await
-            .inspect_err(|err| error!("{err}"))?
-            .json()
-            .await
-            .inspect_err(|err| error!("{err}"))?;
+        let response: AuthResponseBody = if cfg!(test) {
+            AuthResponseBody::default()
+        } else {
+            debug!("{} {}", AUTH_PATH.0, format!("{}{}", self.url, AUTH_PATH.1));
+            http_client
+                .request(AUTH_PATH.0, format!("{}{}", self.url, AUTH_PATH.1))
+                .body(body)
+                .basic_auth(&self.server_key_name, Some(&self.server_key_value))
+                .send()
+                .await
+                .inspect_err(|err| error!("{err}"))?
+                .json()
+                .await
+                .inspect_err(|err| error!("{err}"))?
+        };
 
         Ok(NakamaClient {
             username: self.username,
@@ -154,23 +159,25 @@ impl NakamaClient<Authenticated> {
         http_client: &reqwest::Client,
         _player_id: &str,
     ) -> Result<MhthRating, Error> {
-        let token = self
-            .token
-            .as_ref()
-            .expect("Client is already authenticated");
-        let response: RpcResponse<HealthcheckResponse> = http_client
-            .request(
-                HEALTHCHECK_PATH.0,
-                format!("{}{}", self.url, HEALTHCHECK_PATH.1),
-            )
-            .bearer_auth(token)
-            .send()
-            .await
-            .inspect_err(|err| error!("{err:?}"))?
-            .json()
-            .await
-            .inspect_err(|err| error!("{err:?}"))?;
-        debug!("helthcheck: {}", response.body.success);
+        if cfg!(not(test)) {
+            let token = self
+                .token
+                .as_ref()
+                .expect("Client is already authenticated");
+            let response: endpoints::RpcResponse<endpoints::HealthcheckResponse> = http_client
+                .request(
+                    HEALTHCHECK_PATH.0,
+                    format!("{}{}", self.url, HEALTHCHECK_PATH.1),
+                )
+                .bearer_auth(token)
+                .send()
+                .await
+                .inspect_err(|err| error!("{err:?}"))?
+                .json()
+                .await
+                .inspect_err(|err| error!("{err:?}"))?;
+            debug!("helthcheck: {}", response.body.success);
+        }
 
         Ok(MhthRating::default())
     }

@@ -41,6 +41,12 @@ mod tests {
 
     #[test]
     fn should_load() {
+        unsafe {
+            std::env::set_var("REDIS_URL", "redis_mms");
+            std::env::set_var("REDIS_PORT", "6379");
+            std::env::set_var("REDIS_USER", "redis_mms_admin");
+            std::env::set_var("REDIS_PASSWORD", "super_sercure");
+        }
         assert!(InternalClients::try_from_env().is_ok())
     }
 }

@@ -48,6 +48,14 @@ pub struct AuthResponseBody {
     pub token: String,
 }
 
+impl Default for AuthResponseBody {
+    fn default() -> Self {
+        Self {
+            token: "token".to_string(),
+        }
+    }
+}
+
 pub const NEW_USER: (reqwest::Method, &str) = (reqwest::Method::POST, "/v2/console/user");
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]

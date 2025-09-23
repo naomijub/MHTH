@@ -40,3 +40,18 @@ impl From<(Uuid, Player, MhthRating)> for QueuedPlayer {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn queued_from_player() {
+        let id = Uuid::new_v4();
+        let queued: QueuedPlayer = (id, Player::default(), MhthRating::new()).into();
+
+        assert_eq!(id, queued.player_id);
+        assert_eq!(25., queued.skillrating.rating);
+        assert_eq!(0, queued.ping);
+    }
+}

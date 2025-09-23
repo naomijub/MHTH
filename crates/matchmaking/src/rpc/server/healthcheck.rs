@@ -51,3 +51,29 @@ pub fn healthy(request: Request<HealthCheckRequest>) -> HealthCheckResponse {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn matchmaking_is_healthy() {
+        let health = healthy(Request::new(HealthCheckRequest {
+            service: "matchmaking".to_string(),
+        }));
+        assert_eq!(health.status, 1);
+
+        let health = healthy(Request::new(HealthCheckRequest {
+            service: SERVICE_NAME.to_string(),
+        }));
+        assert_eq!(health.status, 1);
+    }
+
+    #[test]
+    fn other_service_is_notfound() {
+        let health = healthy(Request::new(HealthCheckRequest {
+            service: "random".to_string(),
+        }));
+        assert_eq!(health.status, 0);
+    }
+}
