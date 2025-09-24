@@ -1,6 +1,6 @@
 #!/usr/bin/env just --justfile
 
-# set shell := ["powershell.exe", "-c"]
+set shell := ["powershell.exe", "-c"]
 
 # hello is recipe's name
 hello:
