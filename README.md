@@ -4,6 +4,12 @@
 
 - [Rust](https://rustup.rs/)
 - [gRPC](https://grpc.io/)
+    - Download compiler https://github.com/protocolbuffers/protobuf/releases (protoc-xx.x-win64.zip for windows)
+    - Unzip it in your preferred folder, eg: `C:\protoc`.
+    - Add protoc binary to your `PATH`, Press `Win + S` and type "Environment Variables" to open the System Properties window.
+    - Go to your **User Variables** and select `PATH` and click **Edit**.
+    - Click on **new** and add the the `bin/` folder to your path (`C:\protoc\bin`).
+    - On  powershell write `protoc --version` to verify its correct.
 - `Just`: `cargo install just`
     - on [Windows Check](https://github.com/casey/just?tab=readme-ov-file#windows) 
     - [VS Code Ext](https://marketplace.visualstudio.com/items?itemName=nefrob.vscode-just-syntax)
@@ -18,7 +24,7 @@
 - In `root/` folder execute `cargo build -r`.
 
 ### Execution
-- Add a `.env` file to `crates/matchmaking/`.
+- Add or edit the `.env` file in `crates/matchmaking/`.
     ```ini
     LOG_LEVEL=DEBUG
     NAKAMA_HOST=nakama_mms
