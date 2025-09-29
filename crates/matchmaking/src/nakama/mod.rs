@@ -1,4 +1,4 @@
-use std::marker::PhantomData;
+use std::{marker::PhantomData, sync::Arc};
 
 use skillratings::mhth::MhthRating;
 use tracing::{debug, error};
@@ -9,8 +9,8 @@ use crate::nakama::{
         NEW_USER,
     },
     helpers::{
-        get_env_endpoint, get_env_password, get_env_server_key_name, get_env_server_key_value,
-        get_env_user, get_password,
+        get_env_encryption_key, get_env_endpoint, get_env_password, get_env_server_key_name,
+        get_env_server_key_value, get_env_user, get_password,
     },
 };
 
@@ -50,6 +50,8 @@ pub struct NakamaClient<T = DefaultNakama> {
     server_key_name: String,
     /// NAKAMA_SERVER_KEY
     server_key_value: String,
+    /// Session Encryption Key
+    encryption_key: String,
     _state: PhantomData<T>,
 }
 
@@ -61,6 +63,7 @@ impl NakamaClient<DefaultNakama> {
         let server_key_value = get_env_server_key_value();
         let env_password = get_env_password()?;
         let password = get_password(&env_password);
+        let encryption_key = get_env_encryption_key();
 
         Ok(NakamaClient {
             username,
@@ -68,6 +71,7 @@ impl NakamaClient<DefaultNakama> {
             url,
             server_key_name,
             server_key_value,
+            encryption_key,
             _state: PhantomData::<Unauthenticated>,
             token: None,
         })
@@ -109,6 +113,7 @@ impl NakamaClient<NoUserRegistered> {
             url: self.url,
             server_key_name: self.server_key_name,
             server_key_value: self.server_key_value,
+            encryption_key: self.encryption_key,
             _state: PhantomData::<Unauthenticated>,
         })
     }
@@ -148,6 +153,7 @@ impl NakamaClient<Unauthenticated> {
             url: self.url,
             server_key_name: self.server_key_name,
             server_key_value: self.server_key_value,
+            encryption_key: self.encryption_key,
             _state: PhantomData::<Authenticated>,
         })
     }
@@ -156,7 +162,7 @@ impl NakamaClient<Unauthenticated> {
 impl NakamaClient<Authenticated> {
     pub async fn get_skill_rating(
         &self,
-        http_client: &reqwest::Client,
+        http_client: Arc<reqwest::Client>,
         _player_id: &str,
     ) -> Result<MhthRating, Error> {
         if cfg!(not(test)) {

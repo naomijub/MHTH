@@ -41,6 +41,13 @@ pub(super) fn get_env_endpoint() -> String {
     }
 }
 
+pub(crate) fn get_env_encryption_key() -> String {
+    match std::env::var("NAKAMA_ENCRYPTION_KEY") {
+        Ok(key) => key,
+        Err(_) => "defaultencryptionkey".to_string(),
+    }
+}
+
 pub(super) fn get_env_server_key_name() -> String {
     match std::env::var("NAKAMA_SERVER_KEY_NAME") {
         Ok(url) => url,

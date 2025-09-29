@@ -41,3 +41,7 @@
     REDIS_PASSWORD=<some password2>
     ```
 - execute `just server-up`
+
+## Architecture Outline
+
+![Architecture of the matchmaking service](./docs/images/MHTH_matchmaking.png)

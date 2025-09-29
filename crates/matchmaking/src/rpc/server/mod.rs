@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 
 use chrono::{Local, NaiveDate};
 use redis::AsyncTypedCommands;
@@ -13,21 +13,27 @@ pub use super::matchmaking::matchmaking_service_server::MatchmakingServiceServer
 use crate::{
     nakama::{self, Authenticated},
     rpc::{
-        QueuedPlayer,
+        QueuedPlayer, create_match_queue_key,
         helper::{IntoTonicError, time_since},
-        matchmaking::{HealthCheckRequest, HealthCheckResponse, JoinQueueResponse, Player},
+        matchmaking::{
+            HealthCheckRequest, HealthCheckResponse, JoinMode, JoinQueueResponse, Player,
+        },
+        player_queue_key,
     },
 };
 
+pub mod auth;
 pub mod healthcheck;
 
+pub(crate) static TEN_MINUTES: u64 = 600;
+pub(crate) static TWO_HOURS: u64 = 720;
 pub(crate) static GAME_START: Option<NaiveDate> = NaiveDate::from_yo_opt(2025, 1);
 
 #[derive(Debug, Clone)]
 pub struct MatchmakingServer {
-    pub redis: redis::Client,
-    pub http_client: reqwest::Client,
-    pub nakama_client: nakama::NakamaClient<Authenticated>,
+    pub redis: redis::aio::MultiplexedConnection,
+    pub http_client: Arc<reqwest::Client>,
+    pub nakama_client: Arc<nakama::NakamaClient<Authenticated>>,
 }
 
 #[tonic::async_trait]
@@ -38,30 +44,36 @@ impl MatchmakingService for MatchmakingServer {
         &self,
         request: Request<Player>,
     ) -> Result<tonic::Response<JoinQueueResponse>, tonic::Status> {
+        let user_id = request.extensions().get::<auth::UserId>();
+
         let player_id = Uuid::parse_str(&request.get_ref().player_id).to_tonic_error(
             format!("Invalid player id: {}", request.get_ref().player_id),
             Box::new(tonic::Status::invalid_argument),
         )?;
-        let skillrating = self
-            .nakama_client
-            .get_skill_rating(&self.http_client, &request.get_ref().player_id)
-            .await
+        if user_id.is_none_or(|id| id.player_id != player_id.to_string()) {
+            return Err(tonic::Status::unauthenticated("invalid player token"));
+        }
+
+        let skill_result = {
+            let nakama_client = self.nakama_client.clone();
+            let http_client = self.http_client.clone();
+            nakama_client
+                .get_skill_rating(http_client, &request.get_ref().player_id)
+                .await
+        };
+        let skillrating = skill_result
             .inspect_err(|err| error!("Nakama API failed: {err}\n{err:?}"))
             .to_tonic_error("Nakama API failed", Box::new(tonic::Status::internal))?;
+        let dt = Local::now();
+        let time_since = time_since(&dt)?;
         let data: QueuedPlayer = (player_id, request.into_inner(), skillrating).into();
+        let data = data.joined_at(time_since);
 
-        // Regis block
+        // Redis block
         if cfg!(not(test)) {
-            let mut conn = self
-                .redis
-                .get_multiplexed_tokio_connection()
-                .await
-                .inspect_err(|err| error!("Redis failed to connect: {err}"))
-                .to_tonic_error(
-                    "Redis failed to connect",
-                    Box::new(tonic::Status::unavailable),
-                )?;
-            conn.set(player_id, bitcode::encode(&data))
+            let encoded_player = bitcode::encode(&data);
+            let mut conn = self.redis.clone();
+            conn.set_ex(player_id, &encoded_player, TEN_MINUTES)
                 .await
                 .inspect_err(|err| error!("Redis failed to save player: {err}"))
                 .to_tonic_error(
@@ -69,17 +81,10 @@ impl MatchmakingService for MatchmakingServer {
                     Box::new(tonic::Status::internal),
                 )?;
 
-            let player_queue_key = format!(
-                "queue:{}:{}:{}",
-                data.party_mode,
-                data.party_ids.len(),
-                data.region
-            );
+            let player_key = player_queue_key(&data);
 
-            let dt = Local::now();
-            let time_since = time_since(&dt)?;
             let order = conn
-                .zadd(player_queue_key, bitcode::encode(&data), time_since)
+                .zadd(player_key, &encoded_player, time_since)
                 .await
                 .inspect_err(|err| error!("Redis failed to queue player: {err}\n{err:?}"))
                 .to_tonic_error(
@@ -87,6 +92,18 @@ impl MatchmakingService for MatchmakingServer {
                     Box::new(tonic::Status::internal),
                 )?;
             debug!("Player: `{player_id}` Index: `{order}` TimeSince: `{time_since}`");
+
+            let create_room: i32 = JoinMode::CreateRoom.into();
+            if data.join_mode == create_room {
+                let create_match_key = create_match_queue_key(&data.region);
+
+                let _ = conn
+                    .zadd(create_match_key, &encoded_player, time_since)
+                    .await
+                    .inspect_err(|err| {
+                        error!("Redis failed to queue room creation: {err}\n{err:?}")
+                    });
+            }
         }
 
         Ok(tonic::Response::new(JoinQueueResponse {
@@ -151,9 +168,15 @@ mod tests {
             .authenticate(clients.http_client())
             .await
             .unwrap();
+        let nakama_client = Arc::new(nakama_client);
+        let http_client = Arc::new(clients.http_client);
         let matchmaking_server = MatchmakingServer {
-            redis: clients.redis,
-            http_client: clients.http_client,
+            redis: clients
+                .redis
+                .get_multiplexed_tokio_connection()
+                .await
+                .unwrap(),
+            http_client,
             nakama_client,
         };
 

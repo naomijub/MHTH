@@ -10,9 +10,23 @@ pub mod matchmaking {
 }
 
 pub mod helper;
+pub mod player_impl;
 pub mod server;
+pub mod worker;
 
-#[derive(Debug, Serialize, Deserialize, Encode, Decode)]
+pub const CLOSED_MATCHES: &str = "matches:closed";
+pub const PLAYER_QUEUE: &str = "queue_player";
+pub const CREATE_MATCH_QUEUE: &str = "queue_create_match";
+
+#[derive(Debug, Clone, Serialize, Deserialize, Encode, Decode)]
+pub struct Match {
+    id: Uuid,
+    players: Vec<QueuedPlayer>,
+    region: String,
+    host_id: Uuid,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Encode, Decode)]
 pub struct QueuedPlayer {
     pub player_id: Uuid,
     pub skillrating: MhthRating,
@@ -22,36 +36,17 @@ pub struct QueuedPlayer {
     pub join_mode: i32,
     pub party_mode: i32,
     pub party_ids: Vec<String>,
+    pub join_time: i64,
 }
 
-impl From<(Uuid, Player, MhthRating)> for QueuedPlayer {
-    fn from(
-        (player_id, player, skillrating): (Uuid, Player, skillratings::mhth::MhthRating),
-    ) -> Self {
-        Self {
-            player_id,
-            skillrating,
-            ping: player.ping,
-            difficulty: player.difficulty,
-            join_mode: player.join_mode,
-            region: player.region,
-            party_mode: player.party_mode,
-            party_ids: player.party_member_id,
-        }
-    }
+pub fn player_queue_key(data: &QueuedPlayer) -> String {
+    format!("{PLAYER_QUEUE}:{}:{}", data.party_mode, data.region)
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+pub fn create_match_queue_key(region: &String) -> String {
+    format!("{CREATE_MATCH_QUEUE}:{}", region)
+}
 
-    #[test]
-    fn queued_from_player() {
-        let id = Uuid::new_v4();
-        let queued: QueuedPlayer = (id, Player::default(), MhthRating::new()).into();
-
-        assert_eq!(id, queued.player_id);
-        assert_eq!(25., queued.skillrating.rating);
-        assert_eq!(0, queued.ping);
-    }
+pub fn match_data_key(new_match: &Match) -> String {
+    format!("match:{}", new_match.id)
 }

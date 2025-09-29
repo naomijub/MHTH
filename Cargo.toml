@@ -9,8 +9,11 @@ matchmaking = { path = "crates/matchmaking" }
 skillratings = { path = "crates/skillratings" }
 
 dotenv = "0.15.0"
+hmac = "0.12.1"
+jwt = "0.16.0"
 serde_json = "1.0"
 serde_with = "3.14.1"
+sha2 = "0.10.9"
 thiserror = "2.0.16"
 tracing = "0.1.41"
 tracing-subscriber = "0.3"

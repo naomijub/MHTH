@@ -6,3 +6,5 @@ socket:
   port: 7350
 metrics:
   prometheus_port: 9100
+session:
+  encryption_key: DdPn!WNqNaARYAGe*cgkBHEEccvkEVGd
