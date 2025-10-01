@@ -1,0 +1,35 @@
+# Rust
+target/
+
+# Redis
+data/
+
+# Go
+# Test binary, built with `go test -c`
+**/*.test
+
+
+# Dependency directories (remove the comment below to include it)
+**/vendor/...
+
+# Go workspace file
+**/go.work
+**/go.work.sum
+
+# env file
+/**/.env
+/.env
+
+# Editor/IDE
+.idea/
+.vscode/
+
+# Binaries for programs and plugins
+**/*.exe
+**/*.exe~
+**/*.dll
+**/*.so
+**/*.dylib
+
+# Nakama
+**/.cookie

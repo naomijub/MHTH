@@ -2,7 +2,9 @@ name: Nakama
 logger:
   level: DEBUG
 socket:
-  server_key: abcde123
+  server_key: 2b@Mis_MEEP_b7BurfxBkYcgfy@J_zp
   port: 7350
 metrics:
   prometheus_port: 9100
+session:
+  encryption_key: DdPn!WNqNaARYAGe*cgkBHEEccvkEVGd
