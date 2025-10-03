@@ -6,6 +6,7 @@ use uuid::Uuid;
 use crate::rpc::matchmaking::Player;
 
 pub mod matchmaking {
+    #![allow(clippy::missing_const_for_fn)]
     tonic::include_proto!("matchmaking");
 }
 
@@ -26,7 +27,7 @@ pub struct Match {
     host_id: Uuid,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Encode, Decode)]
+#[derive(Debug, Clone, Serialize, Deserialize, Encode, Decode, PartialEq)]
 pub struct QueuedPlayer {
     pub player_id: Uuid,
     pub skillrating: MhthRating,

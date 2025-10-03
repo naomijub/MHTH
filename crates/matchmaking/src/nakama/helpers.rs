@@ -23,10 +23,14 @@ pub(super) fn get_env_user() -> String {
     }
 }
 
+#[allow(clippy::unnecessary_wraps, reason = "Non test feature is Result based")]
 pub(super) fn get_env_password() -> Result<String, Error> {
     match std::env::var("NAKAMA_PASSWORD") {
         Ok(pswd) => Ok(pswd),
+        #[cfg(not(test))]
         Err(_) => Err(Error::PasswordEnvNotSet),
+        #[cfg(test)]
+        Err(_) => Ok("password".to_string()),
     }
 }
 
@@ -63,7 +67,7 @@ pub(super) fn get_env_server_key_value() -> String {
         Ok(url) => url,
         Err(_) => {
             debug!(".env `NAKAMA_SERVER_KEY` not found. Using default.");
-            "abcde123".to_string()
+            "2b@Mis_MEEP_b7BurfxBkYcgfy@J_zp".to_string()
         }
     }
 }

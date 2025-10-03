@@ -1,7 +1,7 @@
 use std::{sync::Arc, time::Duration};
 
 use chrono::{Local, NaiveDate};
-use redis::AsyncTypedCommands;
+use redis::AsyncCommands;
 use tokio::sync::mpsc;
 use tokio_stream::{StreamExt, wrappers::ReceiverStream};
 use tonic::{Request, Status};
@@ -70,40 +70,38 @@ impl MatchmakingService for MatchmakingServer {
         let data = data.joined_at(time_since);
 
         // Redis block
-        if cfg!(not(test)) {
-            let encoded_player = bitcode::encode(&data);
-            let mut conn = self.redis.clone();
-            conn.set_ex(player_id, &encoded_player, TEN_MINUTES)
+        let encoded_player = bitcode::encode(&data);
+        let mut conn = self.redis.clone();
+        conn.set_ex(player_id, &encoded_player, TEN_MINUTES)
+            .await
+            .map(|_: ()| ())
+            .inspect_err(|err| error!("Redis failed to save player: {err}"))
+            .to_tonic_error(
+                format!("Failed to save player `{player_id}` to redis"),
+                Box::new(tonic::Status::internal),
+            )?;
+
+        let player_key = player_queue_key(&data);
+
+        let order: usize = conn
+            .zadd(player_key, &encoded_player, time_since)
+            .await
+            .inspect_err(|err| error!("Redis failed to queue player: {err}\n{err:?}"))
+            .to_tonic_error(
+                "Failed to add player to queue",
+                Box::new(tonic::Status::internal),
+            )?;
+        debug!("Player: `{player_id}` Index: `{order}` TimeSince: `{time_since}`");
+
+        let create_room: i32 = JoinMode::CreateRoom.into();
+        if data.join_mode == create_room {
+            let create_match_key = create_match_queue_key(&data.region);
+
+            let _ = conn
+                .zadd(create_match_key, &encoded_player, time_since)
                 .await
-                .inspect_err(|err| error!("Redis failed to save player: {err}"))
-                .to_tonic_error(
-                    format!("Failed to save player `{player_id}` to redis"),
-                    Box::new(tonic::Status::internal),
-                )?;
-
-            let player_key = player_queue_key(&data);
-
-            let order = conn
-                .zadd(player_key, &encoded_player, time_since)
-                .await
-                .inspect_err(|err| error!("Redis failed to queue player: {err}\n{err:?}"))
-                .to_tonic_error(
-                    "Failed to add player to queue",
-                    Box::new(tonic::Status::internal),
-                )?;
-            debug!("Player: `{player_id}` Index: `{order}` TimeSince: `{time_since}`");
-
-            let create_room: i32 = JoinMode::CreateRoom.into();
-            if data.join_mode == create_room {
-                let create_match_key = create_match_queue_key(&data.region);
-
-                let _ = conn
-                    .zadd(create_match_key, &encoded_player, time_since)
-                    .await
-                    .inspect_err(|err| {
-                        error!("Redis failed to queue room creation: {err}\n{err:?}")
-                    });
-            }
+                .map(|_: ()| ())
+                .inspect_err(|err| error!("Redis failed to queue room creation: {err}\n{err:?}"));
         }
 
         Ok(tonic::Response::new(JoinQueueResponse {
@@ -157,45 +155,4 @@ impl MatchmakingService for MatchmakingServer {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[tokio::test]
-    async fn test_join_queue() {
-        let clients = crate::internal_clients::InternalClients::try_from_env().unwrap();
-        let nakama_client = nakama::NakamaClient::try_new()
-            .unwrap()
-            .authenticate(clients.http_client())
-            .await
-            .unwrap();
-        let nakama_client = Arc::new(nakama_client);
-        let http_client = Arc::new(clients.http_client);
-        let matchmaking_server = MatchmakingServer {
-            redis: clients
-                .redis
-                .get_multiplexed_tokio_connection()
-                .await
-                .unwrap(),
-            http_client,
-            nakama_client,
-        };
-
-        let response = matchmaking_server
-            .join_queue(Request::new(Player {
-                player_id: "01997433-3000-7b4b-8712-9253d26a68c8".to_string(),
-                loadout_config: "".to_string(),
-                region: "CAN".to_string(),
-                ping: 20,
-                difficulty: 1,
-                join_mode: 2,
-                party_mode: 0,
-                party_member_id: Vec::new(),
-            }))
-            .await
-            .unwrap();
-
-        let response = response.into_inner();
-        assert_eq!(response.player_id, "01997433-3000-7b4b-8712-9253d26a68c8");
-        assert_eq!(response.status, "waiting in queue");
-    }
-}
+mod integration_tests;

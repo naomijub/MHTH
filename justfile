@@ -1,6 +1,6 @@
 #!/usr/bin/env just --justfile
 
-set shell := ["powershell.exe", "-c"]
+# set shell := ["powershell.exe", "-c"]
 
 # hello is recipe's name
 hello:
@@ -28,3 +28,18 @@ server-up:
 
 server-down:
     docker compose down
+
+[unix]
+start-docker-daemon:
+    open -a Docker
+
+[windows]
+start-docker-daemon:
+    Restart-Service docker
+
+test: start-docker-daemon
+    cargo test --all --all-targets --all-features
+    
+ci: test
+    cargo +nightly fmt
+    cargo clippy --all --all-targets --all-features

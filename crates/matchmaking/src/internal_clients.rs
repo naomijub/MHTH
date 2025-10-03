@@ -22,6 +22,7 @@ impl InternalClients {
             Ok(url) => redis::Client::open(format!("redis://{user}:{password}@{url}:{port}"))?,
             Err(_) => redis::Client::open(format!("redis://{user}:{password}@localhost:{port}"))?,
         };
+
         let http_client = reqwest::Client::new();
         Ok(Self { redis, http_client })
     }
@@ -30,23 +31,48 @@ impl InternalClients {
         Ok(self.redis.get_multiplexed_tokio_connection().await?)
     }
 
-    pub fn http_client(&self) -> &reqwest::Client {
+    pub const fn http_client(&self) -> &reqwest::Client {
         &self.http_client
     }
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use super::*;
 
     #[test]
     fn should_load() {
+        dotenv::dotenv().unwrap();
         unsafe {
             std::env::set_var("REDIS_URL", "redis_mms");
             std::env::set_var("REDIS_PORT", "6379");
             std::env::set_var("REDIS_USER", "redis_mms_admin");
             std::env::set_var("REDIS_PASSWORD", "super_sercure");
         }
-        assert!(InternalClients::try_from_env().is_ok())
+        let clients = InternalClients::try_from_env().unwrap();
+        assert_eq!(
+            clients
+                .redis
+                .get_connection_info()
+                .redis
+                .username
+                .clone()
+                .unwrap(),
+            "redis_mms_admin"
+        );
+        assert_eq!(
+            clients
+                .redis
+                .get_connection_info()
+                .redis
+                .password
+                .clone()
+                .unwrap(),
+            "super_sercure"
+        );
+        assert_eq!(
+            clients.redis.get_connection_info().addr.to_string(),
+            "redis_mms:6379"
+        );
     }
 }
