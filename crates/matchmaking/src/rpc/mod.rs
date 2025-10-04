@@ -19,7 +19,7 @@ pub const CLOSED_MATCHES: &str = "matches:closed";
 pub const PLAYER_QUEUE: &str = "queue_player";
 pub const CREATE_MATCH_QUEUE: &str = "queue_create_match";
 
-#[derive(Debug, Clone, Serialize, Deserialize, Encode, Decode)]
+#[derive(Debug, Clone, Serialize, Deserialize, Encode, Decode, PartialEq)]
 pub struct Match {
     id: Uuid,
     players: Vec<QueuedPlayer>,

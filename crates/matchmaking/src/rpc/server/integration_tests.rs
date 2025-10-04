@@ -102,7 +102,6 @@ async fn create_redis(port: u16) -> ContainerAsync<GenericImage> {
     GenericImage::new("redis", "8.2.1-bookworm")
         .with_exposed_port(port.tcp())
         .with_wait_for(WaitFor::message_on_stdout("Ready to accept connections"))
-        .with_network("bridge")
         .with_env_var("REDIS_PASSWORD", "super-secret-password")
         .with_env_var("REDIS_USER", "redis_mms_admin")
         .start()

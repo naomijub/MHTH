@@ -1,4 +1,4 @@
-use redis::{AsyncTypedCommands, RedisError, aio::MultiplexedConnection};
+use redis::{AsyncCommands, RedisError, aio::MultiplexedConnection};
 
 pub const REGIONS_KEY: &str = "match:regions";
 
@@ -9,7 +9,7 @@ pub async fn set_regions(
     let mut conn = conn.clone();
 
     let encode = bitcode::encode(regions);
-    conn.set(REGIONS_KEY, encode).await?;
+    conn.set(REGIONS_KEY, encode).await.map(|_: ()| ())?;
 
     Ok(())
 }
@@ -39,10 +39,10 @@ mod tests {
 
         set_regions(conn.clone(), regions).await.unwrap();
 
-        let encoded = conn.clone().get(REGIONS_KEY).await.unwrap().unwrap();
+        let encoded: Option<Vec<u8>> = conn.clone().get(REGIONS_KEY).await.unwrap();
         container.pause().await.unwrap();
 
-        let decoded: Vec<String> = bitcode::decode(encoded.as_bytes()).unwrap();
+        let decoded: Vec<String> = bitcode::decode(encoded.unwrap().as_slice()).unwrap();
 
         assert_eq!(decoded, regions);
     }
@@ -55,7 +55,6 @@ mod tests {
         GenericImage::new("redis", "8.2.1-bookworm")
             .with_exposed_port(port.tcp())
             .with_wait_for(WaitFor::message_on_stdout("Ready to accept connections"))
-            .with_network("bridge")
             .with_env_var("REDIS_PASSWORD", "super-secret-password")
             .with_env_var("REDIS_USER", "redis_mms_admin")
             .start()

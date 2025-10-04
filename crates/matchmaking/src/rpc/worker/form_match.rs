@@ -140,6 +140,72 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn join_player_match_with_friends() {
+        let friend_1_id = Uuid::new_v4();
+        let friend_2_id = Uuid::new_v4();
+        let friend_1: QueuedPlayer = (
+            friend_1_id,
+            Player {
+                join_mode: 2,
+                ..Default::default()
+            },
+            MhthRating::default(),
+        )
+            .into();
+        let friend_2: QueuedPlayer = (
+            friend_2_id,
+            Player {
+                join_mode: 2,
+                ..Default::default()
+            },
+            MhthRating::default(),
+        )
+            .into();
+        let host_id = Uuid::new_v4();
+        let player: QueuedPlayer = (
+            host_id,
+            Player {
+                join_mode: 0,
+                party_member_id: vec![friend_1_id.to_string(), friend_2_id.to_string()],
+                ..Default::default()
+            },
+            MhthRating::default(),
+        )
+            .into();
+        let container = create_redis(6379).await;
+        let host = container.get_host().await.unwrap();
+        let port = container.get_host_port_ipv4(6379).await.unwrap();
+        let client = redis_client(host.to_string(), port).await;
+        let conn = client.get_multiplexed_async_connection().await.unwrap();
+
+        // Sets friends to create match
+        for (id, friend) in [(friend_1_id, friend_1), (friend_2_id, friend_2)] {
+            let encode = bitcode::encode(&friend);
+            conn.clone().set(id, encode).await.map(|_: ()| ()).unwrap();
+        }
+
+        let mut worker = MatchmakingWorker::new(
+            conn,
+            Arc::new(reqwest::Client::new()),
+            auth_client(666).into(),
+        );
+
+        let created = worker.create_match(&player).await.unwrap();
+        container.pause().await.unwrap();
+
+        assert!(created);
+        assert_eq!(worker.open_matches[0].host_id, host_id);
+        assert_eq!(
+            worker.open_matches[0]
+                .players
+                .iter()
+                .map(|p| p.player_id)
+                .collect::<Vec<Uuid>>(),
+            vec![friend_1_id, friend_2_id, host_id]
+        );
+    }
+
+    #[tokio::test]
     async fn form_match_sets_redis_data() {
         let match_id = Uuid::new_v4();
         let host_player: QueuedPlayer =
@@ -182,6 +248,83 @@ mod tests {
         assert_eq!(empty_key.unwrap(), None);
     }
 
+    #[tokio::test]
+    async fn remove_matched_players_from_closed_match() {
+        let not_friend_id = Uuid::new_v4();
+        let not_friend: QueuedPlayer = (
+            not_friend_id,
+            Player {
+                join_mode: 2,
+                ..Default::default()
+            },
+            MhthRating::default(),
+        )
+            .into();
+        let friend_2_id = Uuid::new_v4();
+        let friend_2: QueuedPlayer = (
+            friend_2_id,
+            Player {
+                join_mode: 2,
+                ..Default::default()
+            },
+            MhthRating::default(),
+        )
+            .into();
+        let host_id = Uuid::new_v4();
+        let player: QueuedPlayer = (
+            host_id,
+            Player {
+                join_mode: 0,
+                party_member_id: vec![friend_2_id.to_string()],
+                ..Default::default()
+            },
+            MhthRating::default(),
+        )
+            .into();
+        let container = create_redis(6379).await;
+        let host = container.get_host().await.unwrap();
+        let port = container.get_host_port_ipv4(6379).await.unwrap();
+        let client = redis_client(host.to_string(), port).await;
+        let mut conn = client.get_multiplexed_async_connection().await.unwrap();
+
+        // Sets friends to create match
+        for (score, p) in [player.clone(), not_friend, friend_2.clone()]
+            .iter()
+            .enumerate()
+        {
+            let encode = bitcode::encode(p);
+            let key = player_queue_key(p);
+            conn.clone()
+                .zadd(key, encode, score)
+                .await
+                .map(|_: ()| ())
+                .unwrap();
+        }
+        let count: usize = conn
+            .zcount(player_queue_key(&player), 0, 100)
+            .await
+            .unwrap();
+        assert_eq!(count, 3);
+
+        let mtc = Match::host(&player, &[friend_2]).unwrap();
+
+        let mut worker = MatchmakingWorker::new(
+            conn.clone(),
+            Arc::new(reqwest::Client::new()),
+            auth_client(666).into(),
+        );
+        worker.open_matches.push(mtc);
+
+        worker.remove_matched_players().await.unwrap();
+
+        let count: usize = conn
+            .zcount(player_queue_key(&player), 0, 100)
+            .await
+            .unwrap();
+        container.pause().await.unwrap();
+        assert_eq!(count, 1);
+    }
+
     async fn redis_client(host: String, port: u16) -> redis::Client {
         redis::Client::open(format!("redis://{host}:{port}")).unwrap()
     }
@@ -190,7 +333,6 @@ mod tests {
         GenericImage::new("redis", "8.2.1-bookworm")
             .with_exposed_port(port.tcp())
             .with_wait_for(WaitFor::message_on_stdout("Ready to accept connections"))
-            .with_network("bridge")
             .with_env_var("REDIS_PASSWORD", "super-secret-password")
             .with_env_var("REDIS_USER", "redis_mms_admin")
             .start()
