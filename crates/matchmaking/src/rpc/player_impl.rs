@@ -4,7 +4,7 @@ use uuid::Uuid;
 use crate::rpc::{Player, QueuedPlayer};
 
 impl QueuedPlayer {
-    pub fn joined_at(mut self, join_time: i64) -> Self {
+    pub const fn joined_at(mut self, join_time: i64) -> Self {
         self.join_time = join_time;
         self
     }

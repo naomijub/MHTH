@@ -33,6 +33,10 @@ uuid.workspace = true
 
 anyhow = {version = "1.0.99", optional = true}
 
+[dev-dependencies]
+testcontainers = "0.25.0"
+httpmock = "0.8.0"
+
 [build-dependencies]
 tonic-prost-build = "0.14.1"
 
@@ -43,3 +47,19 @@ anyhow = ["dep:anyhow"]
 name = "matchmaking-server"
 path = "src/bin/server.rs"
 required-features = ["anyhow"]
+
+[lints.clippy]
+all = "deny"
+redundant_clone = "deny"
+needless_borrow = "deny"
+map_unwrap_or = "deny"
+manual_ok_or = "deny"
+large_enum_variant = "deny"
+unnecessary_wraps = "deny"
+clone_on_copy = "deny"
+needless_collec = "deny"
+missing_const_for_fn = "deny"
+
+[lints.rust]
+future-incompatible = "warn"
+nonstandard_style = "deny"

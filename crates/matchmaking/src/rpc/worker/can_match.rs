@@ -304,3 +304,53 @@ mod tests {
         }
     }
 }
+
+#[cfg(test)]
+mod time_tests {
+    use chrono::Local;
+
+    use super::*;
+
+    #[test]
+    fn test_exactly_equal_minutes() {
+        let now = Local::now();
+        let current_since = time_since(&now).unwrap();
+        let joined_at = current_since - (5 * 60); // joined exactly 5 minutes ago
+        assert!(!more_than_minutes(5, joined_at));
+        // because (5*60)/60 == 5, not > 5
+    }
+
+    #[test]
+    fn test_more_than_minutes_true() {
+        let now = Local::now();
+        let current_since = time_since(&now).unwrap();
+        let joined_at = current_since - (10 * 60); // joined 10 minutes ago
+        assert!(more_than_minutes(5, joined_at));
+        // (10*60)/60 == 10, so > 5
+    }
+
+    #[test]
+    fn test_less_than_minutes_false() {
+        let now = Local::now();
+        let current_since = time_since(&now).unwrap();
+        let joined_at = current_since - (2 * 60); // joined 2 minutes ago
+        assert!(!more_than_minutes(5, joined_at));
+        // (2*60)/60 == 2, so not > 5
+    }
+
+    #[test]
+    fn test_negative_joined_at() {
+        let now = Local::now();
+        let current_since = time_since(&now).unwrap();
+        let joined_at = current_since + (60); // future join time (invalid, but test anyway)
+        assert!(!more_than_minutes(1, joined_at));
+    }
+
+    #[test]
+    fn test_zero_minutes_threshold() {
+        let now = Local::now();
+        let current_since = time_since(&now).unwrap();
+        let joined_at = current_since - 60; // joined 1 minute ago
+        assert!(more_than_minutes(0, joined_at));
+    }
+}

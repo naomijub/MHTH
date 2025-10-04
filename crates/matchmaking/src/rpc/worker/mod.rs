@@ -19,7 +19,7 @@ pub struct MatchmakingWorker {
 }
 
 impl MatchmakingWorker {
-    pub fn new(
+    pub const fn new(
         redis: redis::aio::MultiplexedConnection,
         http_client: Arc<reqwest::Client>,
         nakama_client: Arc<nakama::NakamaClient<Authenticated>>,

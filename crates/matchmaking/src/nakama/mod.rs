@@ -41,18 +41,18 @@ pub enum Error {
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct NakamaClient<T = DefaultNakama> {
     /// NAKAMA_USERNAME
-    username: String,
-    password: String,
-    token: Option<String>,
+    pub(crate) username: String,
+    pub(crate) password: String,
+    pub(crate) token: Option<String>,
     /// NAKAMA_HOST
-    url: String,
+    pub(crate) url: String,
     /// NAKAMA_SERVER_KEY_NAME
-    server_key_name: String,
+    pub(crate) server_key_name: String,
     /// NAKAMA_SERVER_KEY
-    server_key_value: String,
+    pub(crate) server_key_value: String,
     /// Session Encryption Key
-    encryption_key: String,
-    _state: PhantomData<T>,
+    pub(crate) encryption_key: String,
+    pub(crate) _state: PhantomData<T>,
 }
 
 impl NakamaClient<DefaultNakama> {
@@ -130,21 +130,17 @@ impl NakamaClient<Unauthenticated> {
         };
         let body = serde_json::to_string(&request)?;
 
-        let response: AuthResponseBody = if cfg!(test) {
-            AuthResponseBody::default()
-        } else {
-            debug!("{} {}", AUTH_PATH.0, format!("{}{}", self.url, AUTH_PATH.1));
-            http_client
-                .request(AUTH_PATH.0, format!("{}{}", self.url, AUTH_PATH.1))
-                .body(body)
-                .basic_auth(&self.server_key_name, Some(&self.server_key_value))
-                .send()
-                .await
-                .inspect_err(|err| error!("{err}"))?
-                .json()
-                .await
-                .inspect_err(|err| error!("{err}"))?
-        };
+        debug!("{} {}", AUTH_PATH.0, format!("{}{}", self.url, AUTH_PATH.1));
+        let response: AuthResponseBody = http_client
+            .request(AUTH_PATH.0, format!("{}{}", self.url, AUTH_PATH.1))
+            .body(body)
+            .basic_auth(&self.server_key_name, Some(&self.server_key_value))
+            .send()
+            .await
+            .inspect_err(|err| error!("{err}"))?
+            .json()
+            .await
+            .inspect_err(|err| error!("{err}"))?;
 
         Ok(NakamaClient {
             username: self.username,
@@ -165,26 +161,113 @@ impl NakamaClient<Authenticated> {
         http_client: Arc<reqwest::Client>,
         _player_id: &str,
     ) -> Result<MhthRating, Error> {
-        if cfg!(not(test)) {
-            let token = self
-                .token
-                .as_ref()
-                .expect("Client is already authenticated");
-            let response: endpoints::RpcResponse<endpoints::HealthcheckResponse> = http_client
-                .request(
-                    HEALTHCHECK_PATH.0,
-                    format!("{}{}", self.url, HEALTHCHECK_PATH.1),
-                )
-                .bearer_auth(token)
-                .send()
-                .await
-                .inspect_err(|err| error!("{err:?}"))?
-                .json()
-                .await
-                .inspect_err(|err| error!("{err:?}"))?;
-            debug!("helthcheck: {}", response.body.success);
-        }
+        let token = self
+            .token
+            .as_ref()
+            .expect("Client is already authenticated");
+
+        let response: endpoints::RpcResponse<endpoints::HealthcheckResponse> = http_client
+            .request(
+                HEALTHCHECK_PATH.0,
+                format!("{}{}", self.url, HEALTHCHECK_PATH.1),
+            )
+            .bearer_auth(token)
+            .send()
+            .await
+            .inspect_err(|err| error!("Request Error: {err:?}"))?
+            .json()
+            .await
+            .inspect_err(|err| error!("Response Error: {err:?}"))?;
+        debug!("helthcheck: {}", response.body.success);
 
         Ok(MhthRating::default())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use httpmock::prelude::*;
+    use serde_json::json;
+
+    use super::*;
+
+    #[tokio::test]
+    async fn auth_nakama_client() {
+        let server = MockServer::start_async().await;
+        let port = server.address().port();
+        dotenv::dotenv().unwrap();
+        unsafe {
+            std::env::set_var("NAKAMA_HOST", "127.0.0.1");
+            std::env::set_var("NAKAMA_GRPC_PORT", "7349");
+            std::env::set_var("NAKAMA_REST_PORT", "7350");
+            std::env::set_var("NAKAMA_CONSOLE_PORT", port.to_string());
+            std::env::set_var("NAKAMA_USERNAME", "admin");
+            std::env::set_var("NAKAMA_PASSWORD", "password");
+            std::env::set_var("NAKAMA_SERVER_KEY_NAME", "defaultkey");
+            std::env::set_var("NAKAMA_SERVER_KEY", "server_key");
+            std::env::set_var("NAKAMA_ENCRYPTION_KEY", "encryption");
+        }
+
+        let mock = server
+            .mock_async(|when, then| {
+                when.method(POST)
+                    .host("127.0.0.1")
+                    .port(port)
+                    .path("/v2/console/authenticate")
+                    .scheme("http")
+                    .any_request();
+                then.status(200)
+                    .header("content-type", "application/json")
+                    .json_body(json!({"token": "my-random-token"}));
+            })
+            .await;
+
+        let client = NakamaClient::try_new().unwrap();
+        let client = client.authenticate(&reqwest::Client::new()).await.unwrap();
+
+        mock.assert_async().await;
+        assert_eq!(client.token.unwrap(), "my-random-token");
+    }
+
+    #[tokio::test]
+    async fn get_skill_rating_with_auth() {
+        let server = MockServer::start_async().await;
+        let port = server.address().port();
+        let client = auth_client(port);
+
+        let mock = server
+            .mock_async(|when, then| {
+                when.method(POST)
+                    .host("127.0.0.1")
+                    .port(port)
+                    .path("/v2/console/api/endpoints/rpc/healthcheck")
+                    .scheme("http")
+                    .any_request();
+                then.status(200)
+                    .header("content-type", "application/json")
+                    .json_body(json!({"body": "{\"success\": true}", "error_message": "error"}));
+            })
+            .await;
+        let http_client = Arc::new(reqwest::Client::new());
+        let rating = client
+            .get_skill_rating(http_client, "player_id")
+            .await
+            .unwrap();
+
+        mock.assert_async().await;
+        assert_eq!(rating.rating, 25.);
+    }
+
+    pub fn auth_client(port: u16) -> NakamaClient<Authenticated> {
+        NakamaClient {
+            username: "username".to_string(),
+            password: "password".to_string(),
+            token: Some("super_random_token".to_string()),
+            url: format!("http://127.0.0.1:{port}"),
+            server_key_name: "defaultkey".to_string(),
+            server_key_value: "server_key".to_string(),
+            encryption_key: "encryption_key".to_string(),
+            _state: PhantomData,
+        }
     }
 }

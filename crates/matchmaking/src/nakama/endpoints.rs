@@ -19,7 +19,7 @@ where
     T: DeserializeOwned,
 {
     // Step 1: get the raw string
-    let s = String::deserialize(deserializer)?.clone();
+    let s = String::deserialize(deserializer)?;
 
     // Step 2: parse the string into the desired type
     serde_json::from_str(&s).map_err(de::Error::custom)
@@ -100,5 +100,18 @@ mod tests {
         let resp: RpcResponse<HealthcheckResponse> = serde_json::from_str(rpc).unwrap();
 
         assert!(resp.body.success);
+    }
+
+    #[test]
+    pub fn new_admin() {
+        let admin =
+            CreateUserRequestBody::new_admin("username".to_string(), "password".to_string());
+        let default = CreateUserRequestBody::default();
+
+        assert_eq!(admin.username, "username");
+        assert_eq!(admin.password, "password");
+        assert_eq!(admin.email, default.email);
+        assert_eq!(admin.role, default.role);
+        assert!(!admin.newsletter_subscription && !default.newsletter_subscription);
     }
 }
